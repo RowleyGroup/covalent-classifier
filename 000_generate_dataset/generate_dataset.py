@@ -76,9 +76,12 @@ if __name__ == "__main__":
         # Inhibitor_id,InChI,InChI_Key
         for row in reader:
             inchi_orig=row['InChI']
-            m1=Chem.MolFromInchi(inchi_orig)
-            mol = Chem.AddHs(m1)
-            mol=Chem.MolStandardize.rdMolStandardize.CanonicalTautomer(mol)
+            try:
+                m1=Chem.MolFromInchi(inchi_orig)
+                mol = Chem.AddHs(m1)
+                mol=Chem.MolStandardize.rdMolStandardize.CanonicalTautomer(mol)
+            except:
+                continue
             atom_num_list = [atom.GetAtomicNum() for atom in mol.GetAtoms()]
             is_organic = (set(atom_num_list) <= organic_atoms)
 
@@ -157,7 +160,7 @@ if __name__ == "__main__":
                 continue
             noncovalent_data.append( (inchi, inchikey) )
 
-fhout_covalent.write('InChI')
+fhout_covalent.write('InChI\n')
 for (inchi, inchikey) in covalent_data:
     fhout_covalent.write(inchi + '\n')
 fhout_covalent.close()
@@ -169,10 +172,12 @@ for (inchi, inchikey) in noncovalent_data:
 fhout_noncovalent.close()
 
 
-test_set_dir=['aldehyde', 'alkyne',  'aziridine', 'chlorobenzene', 'epoxides',  'haloacetamides', 'furan',
+test_set_dir=['aldehyde', 'alkyne',  'aziridine', 'boronic', 'carbamate', 'chlorobenzene', 'epoxides',  'haloacetamides', 'furan',
               'isothiocyanates', 'lactone',  'nitrile', 'quinone', 'atypical', 'sulfonyl', 'thioketones', 'unsaturated']
-            
+all_testset_positive=[]
+
 for group in test_set_dir:
+    print(group)
     reader = csv.DictReader(open('test_set/RowleyTestSet-positive_' + group + '.csv', mode='r'), delimiter='\t')
     test_set_inchi=[]
     fhout=open('testset-positive_' + group + '.csv', 'w')
@@ -196,14 +201,22 @@ for group in test_set_dir:
             inchikey=Chem.inchi.MolToInchiKey(mol)
             inchi=Chem.inchi.MolToInchi(mol)
             inchikey_connectivity=inchikey.split('-')[0]
+            all_testset_positive.append(inchi)
         except:
             continue
         if(inchikey_connectivity in covalent_inchikeys or inchikey_connectivity in noncovalent_inchikeys):
             continue
         fhout.write(inchi + '\n')
     fhout.close()
+
+fhout=open('testset-positive_all.csv', 'w')
+fhout.write('InChI\n')
+for i in all_testset_positive:
+    fhout.write(i +'\n')
+fhout.close()
+
 #RowleyTestSet-negative_first_disclosures.csv 
-reader = csv.DictReader(open('test_set/RowleyTestSet-negative_first_disclosures.csv', mode='r'), delimiter='\t')
+reader = csv.DictReader(open('test_set/RowleyTestSet-negative_first_disclosures.csv', mode='r'), delimiter=',')
 test_set_inchi=[]
 
 fhout=open('testset-negative_first_disclosure.csv', 'w')
