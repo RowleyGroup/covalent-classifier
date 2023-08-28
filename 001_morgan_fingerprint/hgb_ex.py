@@ -58,9 +58,8 @@ def readcsv(fname, keyname):
             continue
     return(data)
 
-
 r=3
-b=8192
+b=4096
 
 keyname='MorganFP_' + str(r) + '_' + str(b)
 
@@ -72,7 +71,7 @@ y_data=[1]*len(covalent_training_set) + [0]*len(noncovalent_training_set)
 
 X_train, X_test, y_train, y_test = train_test_split(X_data, y_data, test_size=0.1, random_state=1)
 
-clf=LogisticRegression(class_weight="balanced", solver='saga')
+clf=HistGradientBoostingClassifier(max_leaf_nodes=41, max_depth=None, class_weight="balanced")
 
 testset_covalent=readcsv('morgan_data/testset_external_positive_morgan.csv', keyname)
 testset_noncovalent=readcsv('morgan_data/testset_external_negative_morgan.csv', keyname)
@@ -116,3 +115,4 @@ false_positive_false_covalent=sum(y_testset)
 
 print('decoy : ' + str(false_positive_false_covalent))
 print('decoy rate : ' + str(float(false_positive_false_covalent) / len(y_testset)))
+

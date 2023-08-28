@@ -1,12 +1,12 @@
 import csv
-#import matplotlib.pyplot as plt
+
 import sys
 import os
 import pickle
 import numpy as np
 from sklearn import datasets, linear_model
-from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error
-#from toxDataset import toxDataset
+from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error, confusion_matrix, precision_recall_fscore_support
+
 from sklearn import model_selection
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
@@ -50,10 +50,12 @@ def readcsv(fname, keyname):
     bitsize=int(fields[2])
 
     for m in df[keyname]:
-        bv=DataStructs.cDataStructs.ExplicitBitVect(bitsize)
-        bv.FromBase64(m)
-        data.append(np.unpackbits(np.frombuffer(DataStructs.BitVectToBinaryText(bv), dtype=np.uint8), bitorder='little'))
-
+        try:
+            bv=DataStructs.cDataStructs.ExplicitBitVect(bitsize)
+            bv.FromBase64(m)
+            data.append(np.unpackbits(np.frombuffer(DataStructs.BitVectToBinaryText(bv), dtype=np.uint8), bitorder='little'))
+        except:
+            continue
     return(data)
 
 
@@ -69,81 +71,49 @@ noncovalent_training_set=readcsv('morgan_data/trainingset_noncovalent_morgan.csv
 X_data=covalent_training_set + noncovalent_training_set
 y_data=[1]*len(covalent_training_set) + [0]*len(noncovalent_training_set)
 
-X_train, X_valid, y_train, y_valid = train_test_split(X_data, y_data, test_size=0.2, random_state=1)
+X_train, X_test, y_train, y_test = train_test_split(X_data, y_data, test_size=0.1, random_state=1)
 
-#clf=LogisticRegression(C=C, class_weight="balanced", solver='saga')
-clf=RandomForestClassifier(max_depth=21, class_weight="balanced")
+clf=RandomForestClassifier(max_depth=21)
+
+testset_covalent=readcsv('morgan_data/testset_external_positive_morgan.csv', keyname)
+testset_noncovalent=readcsv('morgan_data/testset_external_negative_morgan.csv', keyname)
+
+X_test_ext=testset_covalent + testset_noncovalent
+y_test_ext=[1]*len(testset_covalent) + [0]*len(testset_noncovalent)
 
 clf.fit(X_train, y_train)
-pickle.dump(clf, open('rf_model.pkl', 'wb'))
-quit()
+y_train_pred = clf.predict(X_train)
 
-clf=pickle.load(open('lr_model.pkl', 'rb'))
-bits_list=[]
-#print(clf.coef_)
-lr_coeff=np.array(clf.coef_[0])
+print('Training set AUC : ' + str(roc_auc_score(y_train, y_train_pred)))
 
-for (i, c) in enumerate(clf.coef_[0]):
-    if(c>0.5):
-        bits_list.append(i)
-#        print(c)
-#testset=readcsv('lr_examples.csv', keyname)
+y_test_pred = clf.predict(X_test)
+auc_testset=roc_auc_score(y_test_pred, y_test)
+print('AUC test (internal): ' + str(auc_testset))
+metrics_test_internal=precision_recall_fscore_support(y_test, y_test_pred, average='binary')
+print('Precision test (internal) : ' + str(metrics_test_internal[0]))
+print('Recall test (internal) : ' + str(metrics_test_internal[1]))
+print('F1 test (internal) : ' + str(metrics_test_internal[2]))
+print(y_test_pred)
+print('internal confusion matrix')
+cm = confusion_matrix(y_test_pred, y_test)
+print(cm)
+y_pred_ext = clf.predict(X_test_ext)
+cm = confusion_matrix(y_test_ext, y_pred_ext)
 
-bi = {}
-#fp = np.array(AllChem.GetMorganFingerprintAsBitVect(mol, radius=2, bitInfo=bi, nBits=1024))
-#Draw.DrawMorganBits([(mol, 31, bi), (mol, 33, bi), (mol, 64, bi),
-#(mol, 175, bi), (mol, 356, bi), (mol, 389, bi),
-#(mol, 698, bi), (mol, 726, bi), (mol, 799, bi), 
-#(mol, 849, bi), (mol, 896, bi)], useSVG=True)
+auc=roc_auc_score(y_pred_ext, y_test_ext)
 
-drawOptions = Draw.rdMolDraw2D.MolDrawOptions()
-drawOptions.prepareMolsBeforeDrawing = False
+print('AUC external: ' + str(auc))
+print(precision_recall_fscore_support(y_test_ext, y_pred_ext, average='binary'))
+metrics_test_external=precision_recall_fscore_support(y_test_ext, y_pred_ext, average='binary')
+print('Precision test (external) : ' + str(metrics_test_external[0]))
+print('Recall test (external) : ' + str(metrics_test_external[1]))
+print('F1 test (external) : ' + str(metrics_test_external[2]))
+print('external_confusion_matrix')
+print(cm)
 
-all_mol=[]
-with open('lr_examples.csv', mode='r') as infile:
-    test_data=[]
-    reader = csv.DictReader(infile, delimiter='\t')
-    
-    for row in reader:
-        if(row['InChI'] is not None):
-            test_data.append(row['InChI']  )
+testset=readcsv('morgan_data/testset-negative_false_covalent.csv', keyname)
+y_testset=clf.predict(testset)
+false_positive_false_covalent=sum(y_testset)
 
-    for (i, inchi_orig) in enumerate(test_data):
-
-        m1 = Chem.MolFromInchi(inchi_orig)
-        if(m1==None):
-            continue
-        mol = Chem.AddHs(m1)
-        mol=Chem.MolStandardize.rdMolStandardize.CanonicalTautomer(mol)
-        all_mol.append(mol)
-        
-morgan_tuples=[]
-for (inchi, mol) in zip(test_data,all_mol):
-    info={}
-    fp=AllChem.GetMorganFingerprintAsBitVect(mol, 3, nBits = 8192, bitInfo=info, useChirality=False)
-    np_fp=np.frombuffer(fp.ToBitString().encode(), 'u1') - ord('0')
-    print(inchi)
-    mol_vec=lr_coeff*np_fp
-    for i in range(0, len(mol_vec)):
-        if(mol_vec[i]>0.5):
-            print(str(i) + ' ' + str(mol_vec[i]))
-        
-    tpls = [(mol ,x, info) for x in fp.GetOnBits()]
-
-    for (i, b) in enumerate(fp):
-        if(b==1 and i in bits_list):
-            morgan_tuples.append( (mol, i, info) )
-print(morgan_tuples)
-p=Draw.DrawMorganBits(morgan_tuples, drawOptions=drawOptions)
-
-#fhout=open('lr_morgan.svg', 'w')
-#fhout.write(p)
-#fhout.close()
-
-p.save('lr_morgan.png')
-
-
-#(mol, 175, bi), (mol, 356, bi), (mol, 389, bi),                                                                                                                            
-#(mol, 698, bi), (mol, 726, bi), (mol, 799, bi),                                                                                                                            
-#(mol, 849, bi), (mol, 896, bi)], useSVG=True)     
-        
+print('decoy : ' + str(false_positive_false_covalent))
+print('decoy rate : ' + str(float(false_positive_false_covalent) / len(y_testset)))

@@ -59,8 +59,9 @@ def readcsv(fname, keyname):
     return(data)
 
 
-r=3
-b=8192
+
+r=3 #radii[radii_index]
+b=8192 #bits[bits_index]
 
 keyname='MorganFP_' + str(r) + '_' + str(b)
 
@@ -72,7 +73,8 @@ y_data=[1]*len(covalent_training_set) + [0]*len(noncovalent_training_set)
 
 X_train, X_test, y_train, y_test = train_test_split(X_data, y_data, test_size=0.1, random_state=1)
 
-clf=LogisticRegression(class_weight="balanced", solver='saga')
+clf=MLPClassifier(hidden_layer_sizes=(100,100,100), alpha=0.0001,
+                  solver='adam', activation='relu')
 
 testset_covalent=readcsv('morgan_data/testset_external_positive_morgan.csv', keyname)
 testset_noncovalent=readcsv('morgan_data/testset_external_negative_morgan.csv', keyname)
