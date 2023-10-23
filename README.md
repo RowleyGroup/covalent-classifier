@@ -1,13 +1,16 @@
 # How to use
 
-Run the following commands to install CovalentClassfier env in a new conda env
+Using the python environment manager of your choice:
 
 ```
-conda create --name CovalentClassifier python=3.8 -y
-conda activate CovalentClassifier
+$ pip install -r requirements.txt
 ```
 
-After making sure that the new env is active, run the following:
+# Making a GradCAM heatmap
+You can generate a class activation heatmap by running the following command from the main directory:
 ```
-bash install_conda_env.sh
+python gradcam.py Your_Smiles_Or_InChI_String
 ```
+
+# AIMNet data
+Non-aiment data is available as InChI strings in the `./data` folder. AIMNet is available at this address:
