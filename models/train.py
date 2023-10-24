@@ -70,12 +70,22 @@ def train(X_train, y_train, class_weight,
                 class_weight=class_weight)
     return model
 
-def get_test_metrics():
-    pass
+
+def get_test_metrics(test_file, model):
+    X_test, y_test = make_graph_data(test_file, upsample=False, get_class_weights=False, debug=False)
+    y_pred = model.predict(X_test)
+    print(f"""
+    Test AUC {roc_auc_score(y_test, y_pred)},
+    Test Precision {precision_score(y_test, y_pred)},
+    Test Recall {recall_score(y_test, y_pred)},
+          """, flush=True)
+
 
 def main():
     X_train, y_train, class_weight = make_graph_data("./data/train_test/test_data_all.csv", upsample=True, get_class_weights=True)
-    train(X_train, y_train, class_weight)
+    model = train(X_train, y_train, class_weight)
+    get_test_metrics("./data/train_test/test_data_all.csv", model)
+
 
 if __name__ == "__main__":
     main()
