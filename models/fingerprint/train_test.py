@@ -16,7 +16,7 @@ VERBOSITY = 1
 
 # Adjust these as needed
 RADIUS = 3
-N_BITS = 4096
+N_BITS = 2048
 FP_GEN = AllChem.GetMorganGenerator(fpSize=N_BITS, radius=RADIUS)
 
 # Pick one of the models below
@@ -29,11 +29,11 @@ MODEL_DICT = {
     "mlp": MLPClassifier(hidden_layer_sizes=(100,100,100), alpha=0.0001,
                   solver='adam', activation='relu', verbose=VERBOSITY),
 
-    "rf": RandomForestClassifier(max_depth=21, verbose=VERBOSITY),
+    "rf": RandomForestClassifier(max_depth=21, verbose=VERBOSITY, n_jobs=8),
 
-    "svc": SVC(kernel="rbf", C=1, verbose=VERBOSITY)
+    "svc": SVC(kernel="rbf", C=1, verbose=True, max_iter=1000)
 }
-MODEL = MODEL_DICT["hgb"]
+MODEL = MODEL_DICT["svc"]
 
 def main(debug=True):
     if debug:
