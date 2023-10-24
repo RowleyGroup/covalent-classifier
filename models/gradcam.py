@@ -2,7 +2,7 @@ import argparse
 import tensorflow as tf
 from molgraph.models import GradientActivationMapping
 from molgraph.chemistry import vis
-from config import encode
+from helpers import encode
 
 
 def make_gradcam_heatmap(input_structure, model="./saved_models/GCNII"):
