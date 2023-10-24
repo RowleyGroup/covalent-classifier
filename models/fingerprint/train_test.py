@@ -33,7 +33,7 @@ MODEL_DICT = {
 
     "svc": SVC(kernel="rbf", C=1, verbose=VERBOSITY)
 }
-MODEL = MODEL_DICT["mlp"]
+MODEL = MODEL_DICT["hgb"]
 
 def main(debug=True):
     if debug:

@@ -1,6 +1,6 @@
 # Link to Paper
 
-![Alt Text](./images/abstract_image.png)
+![Alt Text](./images/readme_image.png)
 
 # Setup environment and run models
 Using the python environment manager of your choice (Python~3.10):
