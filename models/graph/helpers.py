@@ -1,5 +1,8 @@
+import tensorflow as tf
 import pandas as pd
+import numpy as np
 from sklearn.utils import shuffle
+from sklearn.metrics import roc_auc_score, precision_score, recall_score
 from molgraph.chemistry import features, Featurizer, MolecularGraphEncoder
 
 RANDOM_STATE = 66
@@ -31,11 +34,13 @@ encoder = MolecularGraphEncoder(atom_encoder, bond_encoder)
 def encode(InChI: str):
     return encoder([InChI])
 
+
 def upsample_minority(df: pd.DataFrame):
     n_neg = len(df.query("covalent == 0"))
     n_pos = len(df.query("covalent == 1"))
 
     if n_neg > n_pos:
+        print("Upsampling the positive class...")
         n_upsample = n_neg - n_neg
         to_concat = (
             df
@@ -44,6 +49,7 @@ def upsample_minority(df: pd.DataFrame):
         )
 
     elif n_neg < n_pos:
+        print("Upsampling the negative class...")
         n_upsample = n_pos - n_neg
         to_concat = (
             df
@@ -54,3 +60,44 @@ def upsample_minority(df: pd.DataFrame):
         return df
 
     return shuffle(pd.concat([df, to_concat]), random_state=RANDOM_STATE)
+
+
+def get_test_metrics(test_file, model):
+    X_test, y_test = make_graph_data(test_file, upsample=False, get_class_weights=False, debug=False)
+    y_pred = model.predict(X_test)
+    y_pred_rounded = np.round(y_pred)
+    print(f"""
+    Test AUC {roc_auc_score(y_test, y_pred)},
+    Test Precision {precision_score(y_test, y_pred_rounded)},
+    Test Recall {recall_score(y_test, y_pred_rounded)},
+          """, flush=True)
+
+
+def make_graph_data(file, upsample=True, get_class_weights=True, debug=True):
+    df_train = pd.read_csv(file)
+    df_train = shuffle(
+        df_train.reset_index(drop=True),
+        random_state=RANDOM_STATE)
+
+    if debug:
+        print("Encoding the graphs, this might take a while...", flush=True)
+    df_train["graph"] = df_train.InChI.apply(encoder)
+
+    if upsample:
+        df_train = upsample_minority(df_train)
+
+    X, y = tf.concat(list(df_train.graph.values), axis=0).separate(), df_train.covalent.values
+
+    if debug:
+        print("Encoding complete!", flush=True)
+
+    if get_class_weights:
+        neg = len(df_train.query("covalent == 0"))
+        pos = len(df_train.query("covalent == 1"))
+        total = neg + pos
+        weight_for_0 = (1 / neg) * (total / 2.0)
+        weight_for_1 = (1 / pos) * (total / 2.0)
+        class_weight = {0: weight_for_0, 1: weight_for_1}
+        return X, y, class_weight
+
+    return X, y

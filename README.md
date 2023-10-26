@@ -18,10 +18,16 @@ $ python models/fingerprint/train_test.py
 ```
 If you want to specify which particular fingerprint model to run, specify that in the script source itself.
 
+# Loading the model and making a prediction
+To load one of the graph models from the `saved_models` folder, run the following:
+```
+$ python models/graph/make_prediction.py Your_Smiles_Or_InChI_String
+```
+
 # Generating a GradCAM heatmap
 You can generate a class activation heatmap by running the following command from the main directory:
 ```
-$ python models/gradcam.py Your_Smiles_Or_InChI_String
+$ python models/graph/gradcam.py Your_Smiles_Or_InChI_String
 ```
 This will make a file named `gradcam_heatmap.png`. If you want to adapt this to your needs, refer to `models/graph/gradcam.py` file itself.
 
