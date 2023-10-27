@@ -5,10 +5,10 @@
 # Setup environment and run models
 
 ## Running a docker image
-We recommend using the scripts by pulling the publicly available docker image `vcanogil/covalentclassifier:latest`
+We recommend using the scripts by pulling the publicly available docker image:
 
 ```
-docker pull vcanogil/covalentclassifier:latest
+docker pull vcanogil/covalentclassifier:v1
 ```
 
 ## Installing locally
