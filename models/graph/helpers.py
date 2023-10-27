@@ -62,17 +62,6 @@ def upsample_minority(df: pd.DataFrame):
     return shuffle(pd.concat([df, to_concat]), random_state=RANDOM_STATE)
 
 
-def get_test_metrics(test_file, model):
-    X_test, y_test = make_graph_data(test_file, upsample=False, get_class_weights=False, debug=False)
-    y_pred = model.predict(X_test)
-    y_pred_rounded = np.round(y_pred)
-    print(f"""
-    Test AUC {roc_auc_score(y_test, y_pred)},
-    Test Precision {precision_score(y_test, y_pred_rounded)},
-    Test Recall {recall_score(y_test, y_pred_rounded)},
-          """, flush=True)
-
-
 def make_graph_data(file, upsample=True, get_class_weights=True, debug=True):
     df_train = pd.read_csv(file)
     df_train = shuffle(

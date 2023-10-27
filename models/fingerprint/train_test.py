@@ -49,7 +49,7 @@ def main(debug=True):
 
     MODEL.fit(X_train, y_train)
 
-    # validation
+    # internal test
     auroc_val, prec_val, recall_val = get_test_metrics(MODEL, X_val, y_val)
     print(f"""
     Internal AUROC: {auroc_val},
@@ -57,7 +57,7 @@ def main(debug=True):
     Internal RECALL: {recall_val},
           """, flush=True)
 
-    # test
+    # external test
     auroc_test, prec_test, recall_test = get_test_metrics(MODEL, X_test, y_test)
     print(f"""
     External AUROC: {auroc_test},
@@ -65,7 +65,7 @@ def main(debug=True):
     External RECALL: {recall_test},
           """, flush=True)
 
-    # false covalent
+    # false covalent test
     accuracy = accuracy_score(y_false_positive, MODEL.predict(X_false_positive))
     print(f"""
     FALSE POSITIVE RATE: {1-accuracy}
