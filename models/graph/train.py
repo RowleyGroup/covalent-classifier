@@ -1,13 +1,13 @@
 import tensorflow as tf
 from molgraph import layers
 from molgraph.layers import MinMaxScaling
-from helpers import make_graph_data
+from helpers import make_graph_data, get_test_metrics
 
 
 def train(X_train, y_train, class_weight,
-          units=32, n_layers=6,
-          dropout=0.1, dense_units=32,
-          activation="relu", learning_rate=5e-5, epochs=300, batch_size=64, verbosity=2):
+          units=32, n_layers=6, use_edge_features=True,
+          dropout=0.15, dense_units=128,
+          activation="relu", learning_rate=5e-5, epochs=10, batch_size=32, verbosity=2):
 
     node_preprocessing = MinMaxScaling(
         feature='node_feature', feature_range=(0, 1), threshold=True)
@@ -31,7 +31,7 @@ def train(X_train, y_train, class_weight,
     model.add(node_preprocessing)
     model.add(edge_preprocessing)
     for _ in range(n_layers):
-        model.add(layers.GINConv(units=units, activation=activation, dropout=dropout, use_edge_features=True))
+        model.add(layers.GINConv(units=units, activation=activation, dropout=dropout, use_edge_features=use_edge_features))
     model.add(layers.Readout('mean'))
     model.add(tf.keras.layers.Dense(dense_units, activation='relu'))
     model.add(tf.keras.layers.Dense(1, activation="sigmoid"))
@@ -51,8 +51,10 @@ def train(X_train, y_train, class_weight,
 
 
 def main():
-    X_train, y_train, class_weight = make_graph_data("./data/InChI_all/training_data_all.csv", upsample=True, get_class_weights=False)
-    train(X_train, y_train, class_weight)
+    X_train, y_train, class_weight = make_graph_data("./data/InChI_all/training_data_all.csv", upsample=True, balance_class_weights=True)
+    model = train(X_train, y_train, class_weight)
+    get_test_metrics("./data/InChI_all/test_data_all.csv", model)
+
 
 if __name__ == "__main__":
     main()

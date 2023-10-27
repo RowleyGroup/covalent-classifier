@@ -20,7 +20,6 @@ atom_encoder = Featurizer([
     features.RingSize(),
     features.GasteigerCharge()
 ])
-
 bond_encoder = Featurizer([
     features.BondType(),
     features.Conjugated(),
@@ -28,8 +27,8 @@ bond_encoder = Featurizer([
     features.Ring(),
     features.Stereo(),
 ])
-
 encoder = MolecularGraphEncoder(atom_encoder, bond_encoder)
+
 
 def encode(InChI: str):
     return encoder([InChI])
@@ -62,7 +61,7 @@ def upsample_minority(df: pd.DataFrame):
     return shuffle(pd.concat([df, to_concat]), random_state=RANDOM_STATE)
 
 
-def make_graph_data(file, upsample=True, get_class_weights=True, debug=True):
+def make_graph_data(file, upsample=True, balance_class_weights=True, debug=True):
     df_train = pd.read_csv(file)
     df_train = shuffle(
         df_train.reset_index(drop=True),
@@ -80,7 +79,7 @@ def make_graph_data(file, upsample=True, get_class_weights=True, debug=True):
     if debug:
         print("Encoding complete!", flush=True)
 
-    if get_class_weights:
+    if balance_class_weights:
         neg = len(df_train.query("covalent == 0"))
         pos = len(df_train.query("covalent == 1"))
         total = neg + pos
@@ -88,5 +87,18 @@ def make_graph_data(file, upsample=True, get_class_weights=True, debug=True):
         weight_for_1 = (1 / pos) * (total / 2.0)
         class_weight = {0: weight_for_0, 1: weight_for_1}
         return X, y, class_weight
+    else:
+        class_weight = {0: 1, 1: 1}
 
-    return X, y
+    return X, y, class_weight
+
+
+def get_test_metrics(test_file, model):
+    X_test, y_test, _ = make_graph_data(test_file, upsample=False, balance_class_weights=False, debug=False)
+    y_pred = model.predict(X_test)
+    y_pred_rounded = np.round(y_pred)
+    print(f"""
+    Test AUC {roc_auc_score(y_test, y_pred)},
+    Test Precision {precision_score(y_test, y_pred_rounded)},
+    Test Recall {recall_score(y_test, y_pred_rounded)},
+          """, flush=True)
