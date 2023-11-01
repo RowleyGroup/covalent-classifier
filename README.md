@@ -21,7 +21,7 @@ pip install -r requirements.txt
 ## Running the training script
 If you want to simply to train a model, run either from the from the main directory:
 ```
-python models/graph/train_test.py
+python models/graph/train.py
 ```
 or
 ```
