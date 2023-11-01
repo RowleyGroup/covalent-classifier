@@ -33,16 +33,16 @@ MODEL_DICT = {
 
     "svc": SVC(kernel="rbf", C=1, verbose=True, max_iter=1000)
 }
-MODEL = MODEL_DICT["svc"]
+MODEL = MODEL_DICT["lr"]
 
 def main(debug=True):
     if debug:
           print("Fetching and encoding the data...")
 
-    X_train, X_val, y_train, y_val = make_train_val_data("./data/train_test/training_data_all.csv",
+    X_train, X_val, y_train, y_val = make_train_val_data("./data/InChI_all/training_data_all.csv",
                                                            fpgen=FP_GEN, random_state=RANDOM_SEED)
-    X_test, y_test = make_test_data("./data/train_test/test_data_all.csv", fpgen=FP_GEN)
-    X_false_positive, y_false_positive = make_test_data("./data/test_noncovalent/false_covalent.csv", fpgen=FP_GEN)
+    X_test, y_test = make_test_data("./data/InChI_all/test_data_all.csv", fpgen=FP_GEN)
+    X_false_positive, y_false_positive = make_test_data("./data/InChI_test_noncovalent/false_covalent.csv", fpgen=FP_GEN)
 
     if debug:
           print("Encoding complete! Begginning training...")
