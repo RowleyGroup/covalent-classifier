@@ -2,6 +2,7 @@ import tensorflow as tf
 import pandas as pd
 import numpy as np
 from sklearn.utils import shuffle
+from sklearn.model_selection import train_test_split
 from sklearn.metrics import roc_auc_score, precision_score, recall_score
 from molgraph.chemistry import features, Featurizer, MolecularGraphEncoder
 
@@ -61,25 +62,45 @@ def upsample_minority(df: pd.DataFrame):
     return shuffle(pd.concat([df, to_concat]), random_state=RANDOM_STATE)
 
 
-def make_graph_data(file, upsample=True, debug=True):
+def make_graph_data(file, upsample=True, debug=True, test_set=False):
     df_train = pd.read_csv(file)
     df_train = shuffle(
         df_train.reset_index(drop=True),
         random_state=RANDOM_STATE)
 
-    if debug:
-        print("Encoding the graphs, this might take a while...", flush=True)
-    df_train["graph"] = df_train.InChI.apply(encoder)
+    if not test_set:
+        df_val = df_train.sample(frac=0.1, random_state=RANDOM_STATE)
+        df_train = df_train.drop(df_val.index)
 
-    if upsample:
-        df_train = upsample_minority(df_train)
+        if debug:
+            print("Encoding the graphs, this might take a while...", flush=True)
 
-    X, y = tf.concat(list(df_train.graph.values), axis=0).separate(), df_train.covalent.values
+        df_train["graph"] = df_train.InChI.apply(encoder)
+        df_val["graph"] = df_val.InChI.apply(encoder)
+        if upsample:
+            df_train = upsample_minority(df_train)
 
-    if debug:
-        print("Encoding complete!", flush=True)
+        X_train, y_train = tf.concat(list(df_train.graph.values), axis=0).separate(), df_train.covalent.values
+        X_val, y_val= tf.concat(list(df_val.graph.values), axis=0).separate(), df_val.covalent.values
 
-    return X, y
+
+        if debug:
+            print("Encoding complete!", flush=True)
+
+        return X_train, X_val, y_train, y_val
+    else:
+        if debug:
+            print("Encoding the graphs, this might take a while...", flush=True)
+
+        df_train["graph"] = df_train.InChI.apply(encoder)
+        X_train, y_train = tf.concat(list(df_train.graph.values), axis=0).separate(), df_train.covalent.values
+
+        if debug:
+            print("Encoding complete!", flush=True)
+
+        return X_train, y_train
+
+
 
 def get_class_weights(y):
     neg = len(y[y==0])
@@ -91,12 +112,22 @@ def get_class_weights(y):
     return class_weight
 
 
+def get_val_metrics(X_val, y_val, model):
+    y_pred = model.predict(X_val)
+    y_pred_rounded = np.round(y_pred)
+    print(f"""
+    Internal AUC {roc_auc_score(y_val, y_pred)},
+    Internal Precision {precision_score(y_val, y_pred_rounded)},
+    Internal Recall {recall_score(y_val, y_pred_rounded)},
+          """, flush=True)
+
+
 def get_test_metrics(test_file, model):
-    X_test, y_test = make_graph_data(test_file, upsample=False, debug=False)
+    X_test, y_test = make_graph_data(test_file, upsample=False, debug=False, test_set=True)
     y_pred = model.predict(X_test)
     y_pred_rounded = np.round(y_pred)
     print(f"""
-    Test AUC {roc_auc_score(y_test, y_pred)},
-    Test Precision {precision_score(y_test, y_pred_rounded)},
-    Test Recall {recall_score(y_test, y_pred_rounded)},
+    External AUC {roc_auc_score(y_test, y_pred)},
+    External Precision {precision_score(y_test, y_pred_rounded)},
+    External Recall {recall_score(y_test, y_pred_rounded)},
           """, flush=True)
