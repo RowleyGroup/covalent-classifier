@@ -1,0 +1,6 @@
+These files are records of entries that are sorted out of dataset.
+
+drugbank_covalent.txt : A list of DrugBank IDs of covalent inhibitors. These are moved from the negative class (not protein reactive) to the positive class
+exclude.txt : A list of DrugBank IDs of compounds excluded from the training set
+insecticide.txt : A list of DrugBank IDs of insecticides. These are removed from the dataset entirely.
+prodrug.txt : A list of DrugBank IDs of compounds annotated as prodrugs. These are removed from the dataset entirely.
