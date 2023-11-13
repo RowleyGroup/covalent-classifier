@@ -1,6 +1,6 @@
 import argparse
 import tensorflow as tf
-from helpers import encode
+from .helpers import encode
 
 
 def make_prediction(input_structure, model="./saved_models/GCNII"):
