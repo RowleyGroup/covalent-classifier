@@ -3,31 +3,37 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import roc_auc_score, precision_score, recall_score
 from rdkit import Chem
+from rdkit.Chem import MACCSkeys
 
 
-def get_fingerprint(smiles, fpgen):
-    mol = Chem.MolFromSmiles(smiles)
+def get_fingerprint(smiles_string, fpgen, maccs=False):
+    mol = Chem.MolFromSmiles(smiles_string)
 
     if not mol:
         return None
 
-    return fpgen.GetFingerprintAsNumPy(mol)
+    fp = fpgen.GetFingerprintAsNumPy(mol)
 
+    if not maccs:
+        return fp
 
-def make_train_val_data(csv_file_cov, csv_file_noncov, fpgen, random_state):
+    keys = MACCSkeys.GenMACCSKeys(mol)
+    keys = np.fromiter(map(int, keys.ToBitString()), dtype=np.int32)
+    return np.concatenate((fp, keys))
+
+def make_train_val_data(csv_file_cov, csv_file_noncov, fpgen, random_state, maccs=False):
 
     df_cov = pd.read_csv(csv_file_cov)
-    df_cov["fp"] = df_cov.SMILES.apply(lambda x: get_fingerprint(x, fpgen=fpgen))
+    df_cov["fp"] = df_cov.SMILES.apply(lambda x: get_fingerprint(x, fpgen=fpgen, maccs=maccs))
     df_cov["covalent"] = 1
     df_cov = df_cov.dropna()
 
     df_noncov = pd.read_csv(csv_file_noncov)
-    df_noncov["fp"] = df_noncov.SMILES.apply(lambda x: get_fingerprint(x, fpgen=fpgen))
+    df_noncov["fp"] = df_noncov.SMILES.apply(lambda x: get_fingerprint(x, fpgen=fpgen, maccs=maccs))
     df_noncov["covalent"] = 0
     df_noncov = df_noncov.dropna()
 
     df = pd.concat([df_cov, df_noncov])
-    print(df.info())
 
     X = np.stack(df.fp.values)
     y = df.covalent.values
@@ -38,9 +44,9 @@ def make_train_val_data(csv_file_cov, csv_file_noncov, fpgen, random_state):
     return X_train, X_test, y_train, y_test
 
 
-def make_test_data(csv_file, fpgen):
+def make_test_data(csv_file, fpgen, maccs=False):
     df = pd.read_csv(csv_file)
-    df["fp"] = df.InChI.apply(lambda x: get_fingerprint(x, fpgen=fpgen))
+    df["fp"] = df.InChI.apply(lambda x: get_fingerprint(x, fpgen=fpgen, maccs=maccs))
     df = df.dropna()
     X = np.stack(df.fp.values)
     y = df.covalent.values
