@@ -5,8 +5,8 @@ from sklearn.metrics import roc_auc_score, precision_score, recall_score
 from rdkit import Chem
 
 
-def get_fingerprint(InChI, fpgen):
-    mol = Chem.MolFromInchi(InChI)
+def get_fingerprint(smiles, fpgen):
+    mol = Chem.MolFromSmiles(smiles)
 
     if not mol:
         return None
@@ -14,10 +14,21 @@ def get_fingerprint(InChI, fpgen):
     return fpgen.GetFingerprintAsNumPy(mol)
 
 
-def make_train_val_data(csv_file, fpgen, random_state):
-    df = pd.read_csv(csv_file)
-    df["fp"] = df.InChI.apply(lambda x: get_fingerprint(x, fpgen=fpgen))
-    df = df.dropna()
+def make_train_val_data(csv_file_cov, csv_file_noncov, fpgen, random_state):
+
+    df_cov = pd.read_csv(csv_file_cov)
+    df_cov["fp"] = df_cov.SMILES.apply(lambda x: get_fingerprint(x, fpgen=fpgen))
+    df_cov["covalent"] = 1
+    df_cov = df_cov.dropna()
+
+    df_noncov = pd.read_csv(csv_file_noncov)
+    df_noncov["fp"] = df_noncov.SMILES.apply(lambda x: get_fingerprint(x, fpgen=fpgen))
+    df_noncov["covalent"] = 0
+    df_noncov = df_noncov.dropna()
+
+    df = pd.concat([df_cov, df_noncov])
+    print(df.info())
+
     X = np.stack(df.fp.values)
     y = df.covalent.values
     X_train, X_test, y_train, y_test = train_test_split(X, y,

@@ -18,6 +18,8 @@ VERBOSITY = 1
 RADIUS = 3
 N_BITS = 2048
 FP_GEN = AllChem.GetMorganGenerator(fpSize=N_BITS, radius=RADIUS)
+TRAIN_DATA_COV = "./data/SMILES_training/trainingset_covalent_smiles.csv"
+TRAIN_DATA_NONCOV = "./data/SMILES_training/trainingset_noncovalent_smiles.csv"
 
 # Pick one of the models below
 MODEL_DICT = {
@@ -39,10 +41,12 @@ def main(debug=True):
     if debug:
           print("Fetching and encoding the data...")
 
-    X_train, X_val, y_train, y_val = make_train_val_data("./data/InChI_all/training_data_all.csv",
-                                                           fpgen=FP_GEN, random_state=RANDOM_SEED)
-    X_test, y_test = make_test_data("./data/InChI_all/test_data_all.csv", fpgen=FP_GEN)
-    X_false_positive, y_false_positive = make_test_data("./data/InChI_test_noncovalent/false_covalent.csv", fpgen=FP_GEN)
+    X_train, X_val, y_train, y_val = make_train_val_data(TRAIN_DATA_COV,
+                                                         TRAIN_DATA_NONCOV,
+                                                         fpgen=FP_GEN,
+                                                         random_state=RANDOM_SEED)
+#     X_test, y_test = make_test_data("./data/InChI_all/test_data_all.csv", fpgen=FP_GEN)
+#     X_false_positive, y_false_positive = make_test_data("./data/InChI_test_noncovalent/false_covalent.csv", fpgen=FP_GEN)
 
     if debug:
           print("Encoding complete! Begginning training...")
@@ -57,19 +61,19 @@ def main(debug=True):
     Internal RECALL: {recall_val},
           """, flush=True)
 
-    # external test
-    auroc_test, prec_test, recall_test = get_test_metrics(MODEL, X_test, y_test)
-    print(f"""
-    External AUROC: {auroc_test},
-    External PRECISION : {prec_test},
-    External RECALL: {recall_test},
-          """, flush=True)
+#     # external test
+#     auroc_test, prec_test, recall_test = get_test_metrics(MODEL, X_test, y_test)
+#     print(f"""
+#     External AUROC: {auroc_test},
+#     External PRECISION : {prec_test},
+#     External RECALL: {recall_test},
+#           """, flush=True)
 
-    # false covalent test
-    accuracy = accuracy_score(y_false_positive, MODEL.predict(X_false_positive))
-    print(f"""
-    FALSE POSITIVE RATE: {1-accuracy}
-          """, flush=True)
+#     # false covalent test
+#     accuracy = accuracy_score(y_false_positive, MODEL.predict(X_false_positive))
+#     print(f"""
+#     FALSE POSITIVE RATE: {1-accuracy}
+#           """, flush=True)
 
 if __name__ == "__main__":
     main()
