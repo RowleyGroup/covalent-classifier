@@ -28,8 +28,8 @@ bond_encoder = Featurizer([
 encoder = MolecularGraphEncoder(atom_encoder, bond_encoder)
 
 
-def encode(InChI: str):
-    return encoder([InChI])
+def encode(smiles_string: str):
+    return encoder([smiles_string])
 
 
 def upsample_minority(df: pd.DataFrame):
@@ -59,8 +59,14 @@ def upsample_minority(df: pd.DataFrame):
     return shuffle(pd.concat([df, to_concat]), random_state=RANDOM_STATE)
 
 
-def make_graph_data(file, upsample=True, debug=True, test_set=False):
-    df_train = pd.read_csv(file)
+def make_graph_data(csv_file_cov, csv_file_noncov, upsample=True, debug=True, test_set=False):
+
+    df_cov = pd.read_csv(csv_file_cov)
+    df_cov["covalent"] = 1
+    df_noncov = pd.read_csv(csv_file_noncov)
+    df_noncov["covalent"] = 0
+
+    df_train = pd.concat([df_cov, df_noncov])
     df_train = shuffle(
         df_train.reset_index(drop=True),
         random_state=RANDOM_STATE)
@@ -72,8 +78,8 @@ def make_graph_data(file, upsample=True, debug=True, test_set=False):
         if debug:
             print("Encoding the graphs, this might take a while...", flush=True)
 
-        df_train["graph"] = df_train.InChI.apply(encoder)
-        df_val["graph"] = df_val.InChI.apply(encoder)
+        df_train["graph"] = df_train.SMILES.apply(encoder)
+        df_val["graph"] = df_val.SMILES.apply(encoder)
         if upsample:
             df_train = upsample_minority(df_train)
 
@@ -89,14 +95,13 @@ def make_graph_data(file, upsample=True, debug=True, test_set=False):
         if debug:
             print("Encoding the graphs, this might take a while...", flush=True)
 
-        df_train["graph"] = df_train.InChI.apply(encoder)
+        df_train["graph"] = df_train.SMILES.apply(encoder)
         X_train, y_train = tf.concat(list(df_train.graph.values), axis=0).separate(), df_train.covalent.values
 
         if debug:
             print("Encoding complete!", flush=True)
 
         return X_train, y_train
-
 
 
 def get_class_weights(y):

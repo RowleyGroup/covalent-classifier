@@ -7,6 +7,9 @@ from helpers import make_graph_data, get_test_metrics, get_class_weights, get_va
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 
+TRAIN_DATA_COV = "./data/SMILES_training/trainingset_covalent_smiles.csv"
+TRAIN_DATA_NONCOV = "./data/SMILES_training/trainingset_noncovalent_smiles.csv"
+
 def train(X_train, y_train, class_weight={0:1, 1:1},
           units=128, n_layers=6, use_edge_features=True,
           dropout=0.15, dense_units=128,
@@ -54,12 +57,14 @@ def train(X_train, y_train, class_weight={0:1, 1:1},
 
 
 def main():
-    X_train, X_val, y_train, y_val = make_graph_data("./data/InChI_all/training_data_all.csv", upsample=True)
+    X_train, X_val, y_train, y_val = make_graph_data(TRAIN_DATA_COV,
+                                                     TRAIN_DATA_NONCOV,
+                                                     upsample=True)
 
     class_weight = get_class_weights(y_train)
     model = train(X_train, y_train, class_weight=class_weight)
-    get_val_metrics(X_val, y_val, model)
-    get_test_metrics("./data/InChI_all/test_data_all.csv", model)
+    # get_val_metrics(X_val, y_val, model)
+    # get_test_metrics("./data/InChI_all/test_data_all.csv", model)
 
 
 if __name__ == "__main__":
