@@ -1,6 +1,7 @@
 import tensorflow as tf
 import pandas as pd
 import numpy as np
+import swifter
 from sklearn.utils import shuffle
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import roc_auc_score, precision_score, recall_score
@@ -59,28 +60,33 @@ def upsample_minority(df: pd.DataFrame):
     return shuffle(pd.concat([df, to_concat]), random_state=RANDOM_STATE)
 
 
-def make_graph_data(csv_file_cov, csv_file_noncov, upsample=True, debug=True, test_set=False):
-
-    df_cov = pd.read_csv(csv_file_cov)
-    df_cov["covalent"] = 1
-    df_noncov = pd.read_csv(csv_file_noncov)
-    df_noncov["covalent"] = 0
-
-    df_train = pd.concat([df_cov, df_noncov])
-    df_train = df_train.drop_duplicates(subset=["SMILES"])
-    df_train = shuffle(
-        df_train.reset_index(drop=True),
-        random_state=RANDOM_STATE)
+def make_graph_data(csv_file_cov=None,
+                    csv_file_noncov=None,
+                    csv_test_file=None,
+                    upsample=True, debug=True, test_set=False):
 
     if not test_set:
+
+        df_cov = pd.read_csv(csv_file_cov)
+        df_cov["covalent"] = 1
+        df_noncov = pd.read_csv(csv_file_noncov)
+        df_noncov["covalent"] = 0
+
+        df_train = pd.concat([df_cov, df_noncov])
+        df_train = df_train.drop_duplicates(subset=["SMILES"])
+        df_train = shuffle(
+            df_train.reset_index(drop=True),
+            random_state=RANDOM_STATE)
+
         df_val = df_train.sample(frac=0.1, random_state=RANDOM_STATE)
         df_train = df_train.drop(df_val.index)
 
         if debug:
             print("Encoding the graphs, this might take a while...", flush=True)
 
-        df_train["graph"] = df_train.SMILES.apply(encoder)
-        df_val["graph"] = df_val.SMILES.apply(encoder)
+        df_train["graph"] = df_train.SMILES.swifter.apply(encoder)
+        df_val["graph"] = df_val.SMILES.swifter.apply(encoder)
+
         if upsample:
             df_train = upsample_minority(df_train)
 
@@ -95,14 +101,16 @@ def make_graph_data(csv_file_cov, csv_file_noncov, upsample=True, debug=True, te
     else:
         if debug:
             print("Encoding the graphs, this might take a while...", flush=True)
-
-        df_train["graph"] = df_train.SMILES.apply(encoder)
-        X_train, y_train = tf.concat(list(df_train.graph.values), axis=0).separate(), df_train.covalent.values
+        df_test = pd.read_csv(csv_test_file)
+        df_test["graph"] = df_test.SMILES.swifter.apply(encoder)
+        X_test, y_test = tf.concat(list(df_test.graph.values), axis=0).separate(), df_test.covalent.values
 
         if debug:
             print("Encoding complete!", flush=True)
 
-        return X_train, y_train
+        return X_test, y_test
+
+
 
 
 def get_class_weights(y):
@@ -126,7 +134,7 @@ def get_val_metrics(X_val, y_val, model):
 
 
 def get_test_metrics(test_file, model):
-    X_test, y_test = make_graph_data(test_file, upsample=False, debug=False, test_set=True)
+    X_test, y_test = make_graph_data(csv_test_file=test_file, upsample=False, debug=False, test_set=True)
     y_pred = model.predict(X_test)
     y_pred_rounded = np.round(y_pred)
     print(f"""

@@ -13,7 +13,7 @@ TRAIN_DATA_NONCOV = "./data/SMILES_training/trainingset_noncovalent_smiles.csv"
 def train(X_train, y_train, class_weight={0:1, 1:1},
           units=128, n_layers=6, use_edge_features=True,
           dropout=0.15, dense_units=128,
-          activation="selu", learning_rate=5e-5, epochs=15, batch_size=64, verbosity=2):
+          activation="selu", learning_rate=5e-5, epochs=30, batch_size=64, verbosity=2):
 
     node_preprocessing = MinMaxScaling(
         feature='node_feature', feature_range=(0, 1), threshold=True)
@@ -37,7 +37,7 @@ def train(X_train, y_train, class_weight={0:1, 1:1},
     model.add(node_preprocessing)
     model.add(edge_preprocessing)
     for _ in range(n_layers):
-        model.add(layers.GCNIIConv(units=units, activation=activation, dropout=dropout, use_edge_features=use_edge_features))
+        model.add(layers.GIN(units=units, activation=activation, dropout=dropout, use_edge_features=use_edge_features))
     model.add(layers.Readout('mean'))
     model.add(tf.keras.layers.Dense(dense_units, activation='relu'))
     model.add(tf.keras.layers.Dense(1, activation="sigmoid"))
@@ -57,14 +57,22 @@ def train(X_train, y_train, class_weight={0:1, 1:1},
 
 
 def main():
-    X_train, X_val, y_train, y_val = make_graph_data(TRAIN_DATA_COV,
-                                                     TRAIN_DATA_NONCOV,
+    X_train, X_val, y_train, y_val = make_graph_data(csv_file_cov=TRAIN_DATA_COV,
+                                                     csv_file_noncov=TRAIN_DATA_NONCOV,
                                                      upsample=True)
 
-    class_weight = get_class_weights(y_train)
-    model = train(X_train, y_train, class_weight=class_weight)
-    get_val_metrics(X_val, y_val, model)
-    # get_test_metrics("./data/InChI_all/test_data_all.csv", model)
+    class_weight = get_class_weights(y=y_train)
+
+    model = train(X_train=X_train,
+                  y_train=y_train,
+                  class_weight=class_weight)
+
+    get_val_metrics(X_val=X_val,
+                    y_val=y_val,
+                    model=model)
+
+    get_test_metrics(test_file="./data/SMILES_test/test_data_all.csv",
+                     model=model)
 
 
 if __name__ == "__main__":
