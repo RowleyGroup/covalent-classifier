@@ -67,6 +67,7 @@ def make_graph_data(csv_file_cov, csv_file_noncov, upsample=True, debug=True, te
     df_noncov["covalent"] = 0
 
     df_train = pd.concat([df_cov, df_noncov])
+    df_train = df_train.drop_duplicates(subset=["SMILES"])
     df_train = shuffle(
         df_train.reset_index(drop=True),
         random_state=RANDOM_STATE)

@@ -63,7 +63,7 @@ def main():
 
     class_weight = get_class_weights(y_train)
     model = train(X_train, y_train, class_weight=class_weight)
-    # get_val_metrics(X_val, y_val, model)
+    get_val_metrics(X_val, y_val, model)
     # get_test_metrics("./data/InChI_all/test_data_all.csv", model)
 
 

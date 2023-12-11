@@ -34,6 +34,7 @@ def make_train_val_data(csv_file_cov, csv_file_noncov, fpgen, random_state, macc
     df_noncov = df_noncov.dropna()
 
     df = pd.concat([df_cov, df_noncov])
+    df = df.drop_duplicates(subset=["SMILES"])
 
     X = np.stack(df.fp.values)
     y = df.covalent.values
