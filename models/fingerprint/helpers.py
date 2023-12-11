@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import swifter
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import roc_auc_score, precision_score, recall_score
 from rdkit import Chem
@@ -24,12 +25,12 @@ def get_fingerprint(smiles_string, fpgen, maccs=False):
 def make_train_val_data(csv_file_cov, csv_file_noncov, fpgen, random_state, maccs=False):
 
     df_cov = pd.read_csv(csv_file_cov)
-    df_cov["fp"] = df_cov.SMILES.apply(lambda x: get_fingerprint(x, fpgen=fpgen, maccs=maccs))
+    df_cov["fp"] = df_cov.SMILES.swifter.apply(lambda x: get_fingerprint(x, fpgen=fpgen, maccs=maccs))
     df_cov["covalent"] = 1
     df_cov = df_cov.dropna()
 
     df_noncov = pd.read_csv(csv_file_noncov)
-    df_noncov["fp"] = df_noncov.SMILES.apply(lambda x: get_fingerprint(x, fpgen=fpgen, maccs=maccs))
+    df_noncov["fp"] = df_noncov.SMILES.swifter.apply(lambda x: get_fingerprint(x, fpgen=fpgen, maccs=maccs))
     df_noncov["covalent"] = 0
     df_noncov = df_noncov.dropna()
 
@@ -45,9 +46,13 @@ def make_train_val_data(csv_file_cov, csv_file_noncov, fpgen, random_state, macc
     return X_train, X_test, y_train, y_test
 
 
-def make_test_data(csv_file, fpgen, maccs=False):
+def make_test_data(csv_file, fpgen, maccs=False, decoy_set=False):
     df = pd.read_csv(csv_file)
-    df["fp"] = df.InChI.apply(lambda x: get_fingerprint(x, fpgen=fpgen, maccs=maccs))
+
+    if decoy_set:
+        df["covalent"] = 0
+
+    df["fp"] = df.SMILES.swifter.apply(lambda x: get_fingerprint(x, fpgen=fpgen, maccs=maccs))
     df = df.dropna()
     X = np.stack(df.fp.values)
     y = df.covalent.values

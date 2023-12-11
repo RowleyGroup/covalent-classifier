@@ -45,10 +45,13 @@ def main(debug=True):
                                                          fpgen=FP_GEN,
                                                          random_state=RANDOM_SEED,
                                                          maccs=MACCS)
-    # X_test, y_test = make_test_data("./data/InChI_all/test_data_all.csv",
-    #                                 fpgen=FP_GEN,
-    #                                 maccs=MACCS)
-#     X_false_positive, y_false_positive = make_test_data("./data/InChI_test_noncovalent/false_covalent.csv", fpgen=FP_GEN)
+    X_test, y_test = make_test_data("./data/SMILES_test/test_data_all.csv",
+                                    fpgen=FP_GEN,
+                                    maccs=MACCS)
+    X_false_positive, y_false_positive = make_test_data("./data/SMILES_test/testset_decoy.csv",
+                                                        fpgen=FP_GEN,
+                                                        maccs=MACCS,
+                                                        decoy_set=True)
 
     if debug:
           print("Encoding complete! Begginning training...")
@@ -63,19 +66,19 @@ def main(debug=True):
     Internal RECALL: {recall_val},
           """, flush=True)
 
-#     # external test
-#     auroc_test, prec_test, recall_test = get_test_metrics(MODEL, X_test, y_test)
-#     print(f"""
-#     External AUROC: {auroc_test},
-#     External PRECISION : {prec_test},
-#     External RECALL: {recall_test},
-#           """, flush=True)
+    # external test
+    auroc_test, prec_test, recall_test = get_test_metrics(MODEL, X_test, y_test)
+    print(f"""
+    External AUROC: {auroc_test},
+    External PRECISION : {prec_test},
+    External RECALL: {recall_test},
+          """, flush=True)
 
-#     # false covalent test
-#     accuracy = accuracy_score(y_false_positive, MODEL.predict(X_false_positive))
-#     print(f"""
-#     FALSE POSITIVE RATE: {1-accuracy}
-#           """, flush=True)
+    # false covalent test
+    accuracy = accuracy_score(y_false_positive, MODEL.predict(X_false_positive))
+    print(f"""
+    FALSE POSITIVE RATE: {1-accuracy}
+          """, flush=True)
 
 if __name__ == "__main__":
     main()

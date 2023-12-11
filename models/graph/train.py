@@ -37,7 +37,7 @@ def train(X_train, y_train, class_weight={0:1, 1:1},
     model.add(node_preprocessing)
     model.add(edge_preprocessing)
     for _ in range(n_layers):
-        model.add(layers.GIN(units=units, activation=activation, dropout=dropout, use_edge_features=use_edge_features))
+        model.add(layers.GINConv(units=units, activation=activation, dropout=dropout, use_edge_features=use_edge_features))
     model.add(layers.Readout('mean'))
     model.add(tf.keras.layers.Dense(dense_units, activation='relu'))
     model.add(tf.keras.layers.Dense(1, activation="sigmoid"))
