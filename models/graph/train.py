@@ -13,7 +13,7 @@ TRAIN_DATA_NONCOV = "./data/SMILES_training/trainingset_noncovalent_smiles.csv"
 def train(X_train, y_train, class_weight={0:1, 1:1},
           units=128, n_layers=6, use_edge_features=True,
           dropout=0.15, dense_units=128,
-          activation="selu", learning_rate=5e-5, epochs=30, batch_size=64, verbosity=2):
+          activation="selu", learning_rate=5e-5, epochs=20, batch_size=64, verbosity=2):
 
     node_preprocessing = MinMaxScaling(
         feature='node_feature', feature_range=(0, 1), threshold=True)
@@ -37,7 +37,7 @@ def train(X_train, y_train, class_weight={0:1, 1:1},
     model.add(node_preprocessing)
     model.add(edge_preprocessing)
     for _ in range(n_layers):
-        model.add(layers.GINConv(units=units, activation=activation, dropout=dropout, use_edge_features=use_edge_features))
+        model.add(layers.GCNII(units=units, activation=activation, dropout=dropout, use_edge_features=use_edge_features))
     model.add(layers.Readout('mean'))
     model.add(tf.keras.layers.Dense(dense_units, activation='relu'))
     model.add(tf.keras.layers.Dense(1, activation="sigmoid"))
@@ -53,6 +53,7 @@ def train(X_train, y_train, class_weight={0:1, 1:1},
                 batch_size=batch_size,
                 callbacks=callbacks,
                 class_weight=class_weight)
+    model.save("./GCNII/")
     return model
 
 
@@ -72,10 +73,10 @@ def main():
                     model=model)
 
     get_test_metrics(test_file="./data/SMILES_test/test_data_all.csv",
-                     model=model, decoy=False)
+                     model=model, decoy_set=False)
 
     get_test_metrics(test_file="./data/SMILES_test/testset_decoy.csv",
-                     model=model, decoy=True)
+                     model=model, decoy_set=True)
 
 
 if __name__ == "__main__":

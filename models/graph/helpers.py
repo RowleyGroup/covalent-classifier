@@ -146,11 +146,15 @@ def get_val_metrics(X_val, y_val, model):
           """, flush=True)
 
 
-def get_test_metrics(test_file, model, decoy=False):
-    X_test, y_test = make_graph_data(csv_test_file=test_file, upsample=False, debug=False, test_set=True)
+def get_test_metrics(test_file, model, test_set=True, decoy_set=False):
+    X_test, y_test = make_graph_data(csv_test_file=test_file,
+                                     upsample=False,
+                                     debug=False,
+                                     test_set=test_set,
+                                     decoy_set=decoy_set)
     y_pred = model.predict(X_test)
     y_pred_rounded = np.round(y_pred)
-    if not decoy:
+    if not decoy_set:
         print(f"""
         External AUC {roc_auc_score(y_test, y_pred)},
         External Precision {precision_score(y_test, y_pred_rounded)},
