@@ -124,8 +124,6 @@ def make_graph_data(csv_file_cov=None,
         return X_test, y_test
 
 
-
-
 def get_class_weights(y):
     neg = len(y[y==0])
     pos = len(y[y==1])
@@ -161,7 +159,7 @@ def get_test_metrics(test_file, model, test_set=True, decoy_set=False):
         External Recall {recall_score(y_test, y_pred_rounded)},
             """, flush=True)
     else:
-        acc = accuracy_score(y_test, y_pred)
+        acc = accuracy_score(y_test, y_pred_rounded)
         print(f"""
         FALSE POSITIVE RATE: {1-acc}
             """, flush=True)
