@@ -72,7 +72,10 @@ def main():
                     model=model)
 
     get_test_metrics(test_file="./data/SMILES_test/test_data_all.csv",
-                     model=model)
+                     model=model, decoy=False)
+
+    get_test_metrics(test_file="./data/SMILES_test/testset_decoy.csv",
+                     model=model, decoy=True)
 
 
 if __name__ == "__main__":

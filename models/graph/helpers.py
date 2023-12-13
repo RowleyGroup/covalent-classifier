@@ -63,7 +63,10 @@ def upsample_minority(df: pd.DataFrame):
 def make_graph_data(csv_file_cov=None,
                     csv_file_noncov=None,
                     csv_test_file=None,
-                    upsample=True, debug=True, test_set=False):
+                    upsample=True,
+                    debug=True,
+                    test_set=False,
+                    decoy_set=False):
 
     if not test_set:
 
@@ -98,6 +101,16 @@ def make_graph_data(csv_file_cov=None,
             print("Encoding complete!", flush=True)
 
         return X_train, X_val, y_train, y_val
+    elif decoy_set:
+        df_decoy = pd.read_csv(csv_test_file)
+        df_decoy["covalent"] = 0
+        df_decoy["graph"] = df_decoy.SMILES.swifter.apply(encoder)
+        X_decoy, y_decoy = tf.concat(list(df_decoy.graph.values), axis=0).separate(), df_decoy.covalent.values
+
+        if debug:
+            print("Encoding complete!", flush=True)
+
+        return X_decoy, y_decoy
     else:
         if debug:
             print("Encoding the graphs, this might take a while...", flush=True)
@@ -133,12 +146,20 @@ def get_val_metrics(X_val, y_val, model):
           """, flush=True)
 
 
-def get_test_metrics(test_file, model):
+def get_test_metrics(test_file, model, decoy=False):
     X_test, y_test = make_graph_data(csv_test_file=test_file, upsample=False, debug=False, test_set=True)
     y_pred = model.predict(X_test)
     y_pred_rounded = np.round(y_pred)
-    print(f"""
-    External AUC {roc_auc_score(y_test, y_pred)},
-    External Precision {precision_score(y_test, y_pred_rounded)},
-    External Recall {recall_score(y_test, y_pred_rounded)},
-          """, flush=True)
+    if not decoy:
+        print(f"""
+        External AUC {roc_auc_score(y_test, y_pred)},
+        External Precision {precision_score(y_test, y_pred_rounded)},
+        External Recall {recall_score(y_test, y_pred_rounded)},
+            """, flush=True)
+    else:
+        print(f"""
+        Decoy AUC {roc_auc_score(y_test, y_pred)},
+        Decoy Precision {precision_score(y_test, y_pred_rounded)},
+        Decoy Recall {recall_score(y_test, y_pred_rounded)},
+            """, flush=True)
+
