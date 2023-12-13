@@ -4,7 +4,7 @@ import numpy as np
 import swifter
 from sklearn.utils import shuffle
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import roc_auc_score, precision_score, recall_score
+from sklearn.metrics import roc_auc_score, precision_score, recall_score, accuracy_score
 from molgraph.chemistry import features, Featurizer, MolecularGraphEncoder
 
 RANDOM_STATE = 66
@@ -161,9 +161,8 @@ def get_test_metrics(test_file, model, test_set=True, decoy_set=False):
         External Recall {recall_score(y_test, y_pred_rounded)},
             """, flush=True)
     else:
+        acc = accuracy_score(y_test, y_pred)
         print(f"""
-        Decoy AUC {roc_auc_score(y_test, y_pred)},
-        Decoy Precision {precision_score(y_test, y_pred_rounded)},
-        Decoy Recall {recall_score(y_test, y_pred_rounded)},
+        FALSE POSITIVE RATE: {1-acc}
             """, flush=True)
 
