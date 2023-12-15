@@ -2,6 +2,7 @@ import tensorflow as tf
 import pandas as pd
 import numpy as np
 import swifter
+import logging
 from sklearn.utils import shuffle
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import roc_auc_score, precision_score, recall_score, accuracy_score, confusion_matrix
@@ -70,21 +71,20 @@ def make_train_val_data(csv_file_cov,
         df_noncov = pd.read_csv(csv_file_noncov)
         df_noncov["covalent"] = 0
 
-        df_train = pd.concat([df_cov, df_noncov])
-        df_train = df_train.drop_duplicates(subset=["SMILES"])
-        df_train = shuffle(
-            df_train.reset_index(drop=True),
-            random_state=RANDOM_STATE
-            )
+        df = pd.concat([df_cov, df_noncov])
+        df = df.drop_duplicates(subset=["SMILES"])
 
-        df_val = df_train.sample(frac=0.1, random_state=RANDOM_STATE)
-        df_train = df_train.drop(df_val.index)
+        df_train, df_val = train_test_split(df,
+                                            test_size=0.1,
+                                            shuffle=True,
+                                            stratify=df.covalent.values,
+                                            random_state=RANDOM_STATE)
 
         if debug:
-            print("Encoding the graphs, this might take a while...", flush=True)
+            logging.info("Encoding the graphs, this might take a while...")
 
-        df_train["graph"] = df_train.SMILES.swifter.apply(encoder)
         df_val["graph"] = df_val.SMILES.swifter.apply(encoder)
+        df_train["graph"] = df_train.SMILES.swifter.apply(encoder)
 
         if upsample:
             df_train = upsample_minority(df_train)
@@ -93,7 +93,7 @@ def make_train_val_data(csv_file_cov,
         X_val, y_val= tf.concat(list(df_val.graph.values), axis=0).separate(), df_val.covalent.values
 
         if debug:
-            print("Encoding complete!", flush=True)
+            logging.info("Encoding complete!")
 
         return X_train, X_val, y_train, y_val
 

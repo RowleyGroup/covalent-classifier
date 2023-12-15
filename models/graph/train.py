@@ -8,7 +8,6 @@ from helpers import make_train_val_data, make_test_data, make_decoy_data
 from helpers import get_test_metrics, get_class_weights
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 
 
 TRAIN_DATA_COV = "./data/SMILES_training/trainingset_covalent_smiles.csv"
