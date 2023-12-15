@@ -4,7 +4,7 @@ import numpy as np
 import swifter
 from sklearn.utils import shuffle
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import roc_auc_score, precision_score, recall_score, accuracy_score
+from sklearn.metrics import roc_auc_score, precision_score, recall_score, accuracy_score, confusion_matrix
 from molgraph.chemistry import features, Featurizer, MolecularGraphEncoder
 
 RANDOM_STATE = 66
@@ -60,15 +60,10 @@ def upsample_minority(df: pd.DataFrame):
     return shuffle(pd.concat([df, to_concat]), random_state=RANDOM_STATE)
 
 
-def make_graph_data(csv_file_cov=None,
-                    csv_file_noncov=None,
-                    csv_test_file=None,
-                    upsample=True,
-                    debug=True,
-                    test_set=False,
-                    decoy_set=False):
-
-    if not test_set:
+def make_train_val_data(csv_file_cov,
+                        csv_file_noncov,
+                        upsample=True,
+                        debug=True):
 
         df_cov = pd.read_csv(csv_file_cov)
         df_cov["covalent"] = 1
@@ -79,7 +74,8 @@ def make_graph_data(csv_file_cov=None,
         df_train = df_train.drop_duplicates(subset=["SMILES"])
         df_train = shuffle(
             df_train.reset_index(drop=True),
-            random_state=RANDOM_STATE)
+            random_state=RANDOM_STATE
+            )[:1000]
 
         df_val = df_train.sample(frac=0.1, random_state=RANDOM_STATE)
         df_train = df_train.drop(df_val.index)
@@ -96,32 +92,26 @@ def make_graph_data(csv_file_cov=None,
         X_train, y_train = tf.concat(list(df_train.graph.values), axis=0).separate(), df_train.covalent.values
         X_val, y_val= tf.concat(list(df_val.graph.values), axis=0).separate(), df_val.covalent.values
 
-
         if debug:
             print("Encoding complete!", flush=True)
 
         return X_train, X_val, y_train, y_val
-    elif decoy_set:
-        df_decoy = pd.read_csv(csv_test_file)
-        df_decoy["covalent"] = 0
-        df_decoy["graph"] = df_decoy.SMILES.swifter.apply(encoder)
-        X_decoy, y_decoy = tf.concat(list(df_decoy.graph.values), axis=0).separate(), df_decoy.covalent.values
 
-        if debug:
-            print("Encoding complete!", flush=True)
 
-        return X_decoy, y_decoy
-    else:
-        if debug:
-            print("Encoding the graphs, this might take a while...", flush=True)
-        df_test = pd.read_csv(csv_test_file)
-        df_test["graph"] = df_test.SMILES.swifter.apply(encoder)
-        X_test, y_test = tf.concat(list(df_test.graph.values), axis=0).separate(), df_test.covalent.values
+def make_test_data(csv_test_file):
 
-        if debug:
-            print("Encoding complete!", flush=True)
+    df_test = pd.read_csv(csv_test_file)
+    df_test["graph"] = df_test.SMILES.swifter.apply(encoder)
+    X_test, y_test = tf.concat(list(df_test.graph.values), axis=0).separate(), df_test.covalent.values
+    return X_test, y_test
 
-        return X_test, y_test
+
+def make_decoy_data(csv_decoy_file):
+    df_decoy = pd.read_csv(csv_decoy_file)
+    df_decoy["covalent"] = 0
+    df_decoy["graph"] = df_decoy.SMILES.swifter.apply(encoder)
+    X_decoy, y_decoy = tf.concat(list(df_decoy.graph.values), axis=0).separate(), df_decoy.covalent.values
+    return X_decoy, y_decoy
 
 
 def get_class_weights(y):
@@ -134,33 +124,19 @@ def get_class_weights(y):
     return class_weight
 
 
-def get_val_metrics(X_val, y_val, model):
-    y_pred = model.predict(X_val)
-    y_pred_rounded = np.round(y_pred)
-    print(f"""
-    Internal AUC {roc_auc_score(y_val, y_pred)},
-    Internal Precision {precision_score(y_val, y_pred_rounded)},
-    Internal Recall {recall_score(y_val, y_pred_rounded)},
-          """, flush=True)
-
-
-def get_test_metrics(test_file, model, test_set=True, decoy_set=False):
-    X_test, y_test = make_graph_data(csv_test_file=test_file,
-                                     upsample=False,
-                                     debug=False,
-                                     test_set=test_set,
-                                     decoy_set=decoy_set)
-    y_pred = model.predict(X_test)
-    y_pred_rounded = np.round(y_pred)
+def get_test_metrics(X, y, model, decoy_set=False):
+    y_pred = model.predict(X)
+    y_pred_rounded = np.round(y)
     if not decoy_set:
+        tn, fp, fn, tp = confusion_matrix(y, y_pred_rounded).ravel()
         print(f"""
-        External AUC {roc_auc_score(y_test, y_pred)},
-        External Precision {precision_score(y_test, y_pred_rounded)},
-        External Recall {recall_score(y_test, y_pred_rounded)},
+        AUC {roc_auc_score(y, y_pred)},
+        Precision {precision_score(y, y_pred_rounded)},
+        External Recall {recall_score(y, y_pred_rounded)},
+        TN, FP, FN, TP: {tn, fp, fn, tp}
             """, flush=True)
     else:
-        acc = accuracy_score(y_test, y_pred_rounded)
+        acc = accuracy_score(y, y_pred_rounded)
         print(f"""
         FALSE POSITIVE RATE: {1-acc}
             """, flush=True)
-
