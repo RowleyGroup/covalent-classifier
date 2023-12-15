@@ -1,9 +1,11 @@
 import tensorflow as tf
 import pandas as pd
 import numpy as np
+import swifter
+import logging
 from sklearn.utils import shuffle
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import roc_auc_score, precision_score, recall_score
+from sklearn.metrics import roc_auc_score, precision_score, recall_score, accuracy_score, confusion_matrix
 from molgraph.chemistry import features, Featurizer, MolecularGraphEncoder
 
 RANDOM_STATE = 66
@@ -11,13 +13,11 @@ RANDOM_STATE = 66
 atom_encoder = Featurizer([
     features.Symbol(),
     features.TotalNumHs(),
-    features.ChiralCenter(),
     features.Aromatic(),
     features.Ring(),
     features.Hetero(),
     features.HydrogenDonor(),
     features.HydrogenAcceptor(),
-    features.CIPCode(),
     features.RingSize(),
     features.GasteigerCharge()
 ])
@@ -26,13 +26,12 @@ bond_encoder = Featurizer([
     features.Conjugated(),
     features.Rotatable(),
     features.Ring(),
-    features.Stereo(),
 ])
 encoder = MolecularGraphEncoder(atom_encoder, bond_encoder)
 
 
-def encode(InChI: str):
-    return encoder([InChI])
+def encode(smiles_string: str):
+    return encoder([smiles_string])
 
 
 def upsample_minority(df: pd.DataFrame):
@@ -40,7 +39,7 @@ def upsample_minority(df: pd.DataFrame):
     n_pos = len(df.query("covalent == 1"))
 
     if n_neg > n_pos:
-        print("Upsampling the positive class...")
+        logging.info("Upsampling the positive class...")
         n_upsample = n_neg - n_pos
         to_concat = (
             df
@@ -49,7 +48,7 @@ def upsample_minority(df: pd.DataFrame):
         )
 
     elif n_neg < n_pos:
-        print("Upsampling the negative class...")
+        logging.info("Upsampling the negative class...")
         n_upsample = n_pos - n_neg
         to_concat = (
             df
@@ -62,44 +61,56 @@ def upsample_minority(df: pd.DataFrame):
     return shuffle(pd.concat([df, to_concat]), random_state=RANDOM_STATE)
 
 
-def make_graph_data(file, upsample=True, debug=True, test_set=False):
-    df_train = pd.read_csv(file)
-    df_train = shuffle(
-        df_train.reset_index(drop=True),
-        random_state=RANDOM_STATE)
+def make_train_val_data(csv_file_cov,
+                        csv_file_noncov,
+                        upsample=True,
+                        debug=True):
 
-    if not test_set:
-        df_val = df_train.sample(frac=0.1, random_state=RANDOM_STATE)
-        df_train = df_train.drop(df_val.index)
+        df_cov = pd.read_csv(csv_file_cov)
+        df_cov["covalent"] = 1
+        df_noncov = pd.read_csv(csv_file_noncov)
+        df_noncov["covalent"] = 0
+
+        df = pd.concat([df_cov, df_noncov])
+        df = df.drop_duplicates(subset=["SMILES"])
+
+        df_train, df_val = train_test_split(df,
+                                            test_size=0.1,
+                                            shuffle=True,
+                                            stratify=df.covalent.values,
+                                            random_state=RANDOM_STATE)
 
         if debug:
-            print("Encoding the graphs, this might take a while...", flush=True)
+            logging.info("Encoding the graphs, this might take a while...")
 
-        df_train["graph"] = df_train.InChI.apply(encoder)
-        df_val["graph"] = df_val.InChI.apply(encoder)
+        df_val["graph"] = df_val.SMILES.swifter.apply(encoder)
+        df_train["graph"] = df_train.SMILES.swifter.apply(encoder)
+
         if upsample:
             df_train = upsample_minority(df_train)
 
         X_train, y_train = tf.concat(list(df_train.graph.values), axis=0).separate(), df_train.covalent.values
         X_val, y_val= tf.concat(list(df_val.graph.values), axis=0).separate(), df_val.covalent.values
 
-
         if debug:
-            print("Encoding complete!", flush=True)
+            logging.info("Encoding complete!")
 
         return X_train, X_val, y_train, y_val
-    else:
-        if debug:
-            print("Encoding the graphs, this might take a while...", flush=True)
 
-        df_train["graph"] = df_train.InChI.apply(encoder)
-        X_train, y_train = tf.concat(list(df_train.graph.values), axis=0).separate(), df_train.covalent.values
 
-        if debug:
-            print("Encoding complete!", flush=True)
+def make_test_data(csv_test_file):
+    df_test = pd.read_csv(csv_test_file)
+    df_test["graph"] = df_test.SMILES.swifter.apply(encoder)
+    X_test, y_test = tf.concat(list(df_test.graph.values), axis=0).separate(), df_test.covalent.values
+    return X_test, y_test
 
-        return X_train, y_train
 
+def make_decoy_data(csv_decoy_file):
+    df_decoy = pd.read_csv(csv_decoy_file)
+    df_decoy["covalent"] = 0
+    df_decoy["graph"] = df_decoy.SMILES.swifter.apply(encoder)
+    X_decoy, y_decoy = tf.concat(list(df_decoy.graph.values), axis=0).separate(), df_decoy.covalent.values
+    return X_decoy, y_decoy
 
 
 def get_class_weights(y):
@@ -112,22 +123,19 @@ def get_class_weights(y):
     return class_weight
 
 
-def get_val_metrics(X_val, y_val, model):
-    y_pred = model.predict(X_val)
+def get_test_metrics(X, y_true, model, decoy_set=False):
+    y_pred = model.predict(X)
     y_pred_rounded = np.round(y_pred)
-    print(f"""
-    Internal AUC {roc_auc_score(y_val, y_pred)},
-    Internal Precision {precision_score(y_val, y_pred_rounded)},
-    Internal Recall {recall_score(y_val, y_pred_rounded)},
-          """, flush=True)
-
-
-def get_test_metrics(test_file, model):
-    X_test, y_test = make_graph_data(test_file, upsample=False, debug=False, test_set=True)
-    y_pred = model.predict(X_test)
-    y_pred_rounded = np.round(y_pred)
-    print(f"""
-    External AUC {roc_auc_score(y_test, y_pred)},
-    External Precision {precision_score(y_test, y_pred_rounded)},
-    External Recall {recall_score(y_test, y_pred_rounded)},
-          """, flush=True)
+    if not decoy_set:
+        tn, fp, fn, tp = confusion_matrix(y_true, y_pred_rounded).ravel()
+        print(f"""
+        AUC {roc_auc_score(y_true, y_pred)},
+        Precision {precision_score(y_true, y_pred_rounded)},
+        External Recall {recall_score(y_true, y_pred_rounded)},
+        TN, FP, FN, TP: {tn, fp, fn, tp}
+            """, flush=True)
+    else:
+        acc = accuracy_score(y_true, y_pred_rounded)
+        print(f"""
+        FALSE POSITIVE RATE: {1-acc}
+            """, flush=True)
