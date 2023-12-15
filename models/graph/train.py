@@ -8,6 +8,8 @@ from helpers import make_train_val_data, make_test_data, make_decoy_data
 from helpers import get_test_metrics, get_class_weights
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
+
 
 TRAIN_DATA_COV = "./data/SMILES_training/trainingset_covalent_smiles.csv"
 TRAIN_DATA_NONCOV = "./data/SMILES_training/trainingset_noncovalent_smiles.csv"
@@ -74,7 +76,7 @@ def main():
                   y_train=y_train,
                   class_weight=class_weight)
 
-    # model = tf.keras.models.load_model("./saved_models/GAT/")
+    # model = tf.keras.models.load_model("./saved_models/GatedGCN/")
 
     print("***\n VAL METRICS \n***")
     get_test_metrics(X_val, y_val, model)

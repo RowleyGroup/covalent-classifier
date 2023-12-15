@@ -75,7 +75,7 @@ def make_train_val_data(csv_file_cov,
         df_train = shuffle(
             df_train.reset_index(drop=True),
             random_state=RANDOM_STATE
-            )[:1000]
+            )
 
         df_val = df_train.sample(frac=0.1, random_state=RANDOM_STATE)
         df_train = df_train.drop(df_val.index)
@@ -99,7 +99,6 @@ def make_train_val_data(csv_file_cov,
 
 
 def make_test_data(csv_test_file):
-
     df_test = pd.read_csv(csv_test_file)
     df_test["graph"] = df_test.SMILES.swifter.apply(encoder)
     X_test, y_test = tf.concat(list(df_test.graph.values), axis=0).separate(), df_test.covalent.values
@@ -124,19 +123,19 @@ def get_class_weights(y):
     return class_weight
 
 
-def get_test_metrics(X, y, model, decoy_set=False):
+def get_test_metrics(X, y_true, model, decoy_set=False):
     y_pred = model.predict(X)
-    y_pred_rounded = np.round(y)
+    y_pred_rounded = np.round(y_pred)
     if not decoy_set:
-        tn, fp, fn, tp = confusion_matrix(y, y_pred_rounded).ravel()
+        tn, fp, fn, tp = confusion_matrix(y_true, y_pred_rounded).ravel()
         print(f"""
-        AUC {roc_auc_score(y, y_pred)},
-        Precision {precision_score(y, y_pred_rounded)},
-        External Recall {recall_score(y, y_pred_rounded)},
+        AUC {roc_auc_score(y_true, y_pred)},
+        Precision {precision_score(y_true, y_pred_rounded)},
+        External Recall {recall_score(y_true, y_pred_rounded)},
         TN, FP, FN, TP: {tn, fp, fn, tp}
             """, flush=True)
     else:
-        acc = accuracy_score(y, y_pred_rounded)
+        acc = accuracy_score(y_true, y_pred_rounded)
         print(f"""
         FALSE POSITIVE RATE: {1-acc}
             """, flush=True)
