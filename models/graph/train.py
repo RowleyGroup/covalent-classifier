@@ -15,10 +15,19 @@ TRAIN_DATA_NONCOV = "./data/SMILES_training/trainingset_noncovalent_smiles.csv"
 TEST_DATA = "./data/SMILES_test/test_data_all.csv"
 DECOY_DATA = "./data/SMILES_test/testset_decoy.csv"
 
-def train(X_train, y_train, class_weight={0:1, 1:1},
-          units=32, n_layers=4, use_edge_features=False,
-          dropout=0.1, dense_units=128,
-          activation="selu", learning_rate=5e-5, epochs=20, batch_size=16, verbosity=2):
+def train(X_train, y_train,
+          class_weight={0:1, 1:1},
+          layer = layers.GatedGCNConv,
+          units=32,
+          n_layers=4,
+          use_edge_features=False,
+          dropout=0.1,
+          dense_units=128,
+          activation="selu",
+          learning_rate=5e-5,
+          epochs=20,
+          batch_size=16,
+          verbosity=2):
 
     node_preprocessing = MinMaxScaling(
         feature='node_feature', feature_range=(0, 1), threshold=True)
@@ -42,7 +51,7 @@ def train(X_train, y_train, class_weight={0:1, 1:1},
     model.add(node_preprocessing)
     model.add(edge_preprocessing)
     for _ in range(n_layers):
-        model.add(layers.GatedGCNConv(units=units, activation=activation, dropout=dropout, use_edge_features=use_edge_features))
+        model.add(layer(units=units, activation=activation, dropout=dropout, use_edge_features=use_edge_features))
     model.add(layers.Readout('mean'))
     model.add(tf.keras.layers.Dense(dense_units, activation='relu'))
     model.add(tf.keras.layers.Dense(1, activation="sigmoid"))
@@ -58,7 +67,6 @@ def train(X_train, y_train, class_weight={0:1, 1:1},
                 batch_size=batch_size,
                 callbacks=callbacks,
                 class_weight=class_weight)
-    model.save("./GatedGCN/")
     return model
 
 

@@ -39,7 +39,7 @@ def upsample_minority(df: pd.DataFrame):
     n_pos = len(df.query("covalent == 1"))
 
     if n_neg > n_pos:
-        print("Upsampling the positive class...")
+        logging.info("Upsampling the positive class...")
         n_upsample = n_neg - n_pos
         to_concat = (
             df
@@ -48,7 +48,7 @@ def upsample_minority(df: pd.DataFrame):
         )
 
     elif n_neg < n_pos:
-        print("Upsampling the negative class...")
+        logging.info("Upsampling the negative class...")
         n_upsample = n_pos - n_neg
         to_concat = (
             df
