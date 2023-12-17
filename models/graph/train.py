@@ -17,7 +17,7 @@ DECOY_DATA = "./data/SMILES_test/testset_decoy.csv"
 
 def train(X_train, y_train,
           class_weight={0:1, 1:1},
-          layer = layers.GatedGCNConv,
+          layer = layers.GATConv,
           units=32,
           n_layers=4,
           use_edge_features=False,
@@ -37,6 +37,7 @@ def train(X_train, y_train,
     callbacks = [
         tf.keras.callbacks.EarlyStopping(
             monitor='roc_auc',
+            min_delta=1e-3,
             patience=5,
             mode='max',
             restore_best_weights=True,
