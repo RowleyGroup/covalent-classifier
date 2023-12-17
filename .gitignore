@@ -4,3 +4,4 @@ models/fingerprint/__pycache__/helpers.cpython-310.pyc
 models/graph/__pycache__/helpers.cpython-310.pyc
 ignoredFolder/
 train_data.pkl
+test_notebooks/
