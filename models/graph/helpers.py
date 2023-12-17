@@ -75,7 +75,7 @@ def make_train_val_data(csv_file_cov,
         df = df.drop_duplicates(subset=["SMILES"])
 
         df_train, df_val = train_test_split(df,
-                                            test_size=0.1,
+                                            test_size=0.05,
                                             shuffle=True,
                                             stratify=df.covalent.values,
                                             random_state=RANDOM_STATE)
