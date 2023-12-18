@@ -15,21 +15,21 @@ TRAIN_DATA_NONCOV = "./data/SMILES_training/trainingset_noncovalent_smiles.csv"
 TEST_DATA = "./data/SMILES_test/test_data_all.csv"
 DECOY_DATA = "./data/SMILES_test/testset_decoy.csv"
 UPSAMPLE = True
-CHANGE_WEIGTHS = True
-MODELNAME = "GraphSage"
+CHANGE_WEIGTHS = False
+MODELNAME = "GAT"
 
 def train(X_train, y_train,
           class_weight={0:1, 1:1},
-          layer = layers.GraphSageConv,
+          layer = layers.GATConv,
           units=64,
           n_layers=6,
-          use_edge_features=True,
+          use_edge_features=False,
           dropout=0.25,
           dense_units=128,
           activation="relu",
           learning_rate=5e-5,
           epochs=30,
-          batch_size=64,
+          batch_size=16,
           verbosity=2):
 
     node_preprocessing = MinMaxScaling(
