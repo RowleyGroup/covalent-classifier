@@ -2,5 +2,7 @@
 *__pychache__
 models/fingerprint/__pycache__/helpers.cpython-310.pyc
 models/graph/__pycache__/helpers.cpython-310.pyc
+saved_models/old_models/
 ignoredFolder/
 train_data.pkl
+test_notebooks/
