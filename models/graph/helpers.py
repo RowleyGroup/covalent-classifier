@@ -19,7 +19,6 @@ atom_encoder = Featurizer([
     features.Hetero(),
     features.HydrogenDonor(),
     features.HydrogenAcceptor(),
-    features.CIPCode(),
     features.RingSize(),
     features.GasteigerCharge()
 ])
@@ -28,7 +27,6 @@ bond_encoder = Featurizer([
     features.Conjugated(),
     features.Rotatable(),
     features.Ring(),
-    features.Stereo()
 ])
 encoder = MolecularGraphEncoder(atom_encoder, bond_encoder)
 

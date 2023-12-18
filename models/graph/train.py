@@ -16,18 +16,19 @@ TEST_DATA = "./data/SMILES_test/test_data_all.csv"
 DECOY_DATA = "./data/SMILES_test/testset_decoy.csv"
 UPSAMPLE = True
 CHANGE_WEIGTHS = True
+MODELNAME = "GT"
 
 def train(X_train, y_train,
           class_weight={0:1, 1:1},
-          layer = layers.GCNIIConv,
-          units=32,
+          layer = layers.GTConv,
+          units=64,
           n_layers=6,
-          use_edge_features=False,
-          dropout=0.15,
+          use_edge_features=True,
+          dropout=0.1,
           dense_units=128,
           activation="selu",
           learning_rate=5e-5,
-          epochs=20,
+          epochs=30,
           batch_size=64,
           verbosity=2):
 
@@ -54,7 +55,8 @@ def train(X_train, y_train,
     model.add(node_preprocessing)
     model.add(edge_preprocessing)
     for _ in range(n_layers):
-        model.add(layer(units=units, activation=activation, dropout=dropout, use_edge_features=use_edge_features))
+        model.add(layer(units=units, activation=activation, dropout=dropout,
+                        use_edge_features=use_edge_features))
     model.add(layers.Readout('mean'))
     model.add(tf.keras.layers.Dense(dense_units, activation='relu'))
     model.add(tf.keras.layers.Dense(1, activation="sigmoid"))
@@ -62,7 +64,9 @@ def train(X_train, y_train,
     model.compile(
         optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate),
         loss=tf.keras.losses.BinaryCrossentropy(),
-        metrics=[tf.keras.metrics.Precision(), tf.keras.metrics.Recall(), tf.keras.metrics.AUC(name="roc_auc")])
+        metrics=[tf.keras.metrics.Precision(),
+                 tf.keras.metrics.Recall(),
+                 tf.keras.metrics.AUC(name="roc_auc")])
 
     model.fit(X_train, y_train,
                 epochs=epochs,
@@ -70,6 +74,7 @@ def train(X_train, y_train,
                 batch_size=batch_size,
                 callbacks=callbacks,
                 class_weight=class_weight)
+    model.save(f"./{MODELNAME}")
     return model
 
 
