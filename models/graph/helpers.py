@@ -73,7 +73,7 @@ def make_train_val_data(csv_file_cov,
         df_noncov["covalent"] = 0
 
         df = pd.concat([df_cov, df_noncov])
-        df = df.drop_duplicates(subset=["SMILES"])
+        df = df.drop_duplicates(subset=["SMILES"]).reset_index(drop=True)
 
         df_train, df_val = train_test_split(df,
                                             test_size=0.1,
