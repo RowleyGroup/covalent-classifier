@@ -15,21 +15,21 @@ TRAIN_DATA_NONCOV = "./data/SMILES_training/trainingset_noncovalent_smiles.csv"
 TEST_DATA = "./data/SMILES_test/test_data_all.csv"
 DECOY_DATA = "./data/SMILES_test/testset_decoy.csv"
 UPSAMPLE = True
-CHANGE_WEIGTHS = False
-MODELNAME = "GMM"
+CHANGE_WEIGTHS = True
+MODELNAME = "GCNII"
 
 def train(X_train, y_train,
           class_weight={0:1, 1:1},
-          layer = layers.GMMConv,
+          layer = layers.GCNIIConv,
           units=64,
           n_layers=6,
           use_edge_features=False,
-          dropout=0.1,
+          dropout=0.15,
           dense_units=128,
           activation="selu",
           learning_rate=5e-5,
           epochs=30,
-          batch_size=16,
+          batch_size=32,
           verbosity=2):
 
     node_preprocessing = MinMaxScaling(
