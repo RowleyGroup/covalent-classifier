@@ -14,19 +14,22 @@ TRAIN_DATA_COV = "./data/SMILES_training/trainingset_covalent_smiles.csv"
 TRAIN_DATA_NONCOV = "./data/SMILES_training/trainingset_noncovalent_smiles.csv"
 TEST_DATA = "./data/SMILES_test/test_data_all.csv"
 DECOY_DATA = "./data/SMILES_test/testset_decoy.csv"
+UPSAMPLE = True
+CHANGE_WEIGTHS = True
+MODELNAME = "GraphSage"
 
 def train(X_train, y_train,
           class_weight={0:1, 1:1},
-          layer = layers.GATConv,
-          units=32,
-          n_layers=4,
-          use_edge_features=False,
-          dropout=0.1,
+          layer = layers.GraphSageConv,
+          units=64,
+          n_layers=6,
+          use_edge_features=True,
+          dropout=0.25,
           dense_units=128,
-          activation="selu",
+          activation="relu",
           learning_rate=5e-5,
-          epochs=20,
-          batch_size=16,
+          epochs=30,
+          batch_size=64,
           verbosity=2):
 
     node_preprocessing = MinMaxScaling(
@@ -52,7 +55,8 @@ def train(X_train, y_train,
     model.add(node_preprocessing)
     model.add(edge_preprocessing)
     for _ in range(n_layers):
-        model.add(layer(units=units, activation=activation, dropout=dropout, use_edge_features=use_edge_features))
+        model.add(layer(units=units, activation=activation, dropout=dropout,
+                        use_edge_features=use_edge_features))
     model.add(layers.Readout('mean'))
     model.add(tf.keras.layers.Dense(dense_units, activation='relu'))
     model.add(tf.keras.layers.Dense(1, activation="sigmoid"))
@@ -60,7 +64,9 @@ def train(X_train, y_train,
     model.compile(
         optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate),
         loss=tf.keras.losses.BinaryCrossentropy(),
-        metrics=[tf.keras.metrics.Precision(), tf.keras.metrics.Recall(), tf.keras.metrics.AUC(name="roc_auc")])
+        metrics=[tf.keras.metrics.Precision(),
+                 tf.keras.metrics.Recall(),
+                 tf.keras.metrics.AUC(name="roc_auc")])
 
     model.fit(X_train, y_train,
                 epochs=epochs,
@@ -68,23 +74,26 @@ def train(X_train, y_train,
                 batch_size=batch_size,
                 callbacks=callbacks,
                 class_weight=class_weight)
+    model.save(f"./{MODELNAME}")
     return model
 
 
 def main():
     X_train, X_val, y_train, y_val = make_train_val_data(csv_file_cov=TRAIN_DATA_COV,
                                                          csv_file_noncov=TRAIN_DATA_NONCOV,
-                                                         upsample=True)
+                                                         upsample=UPSAMPLE)
     X_test, y_test = make_test_data(csv_test_file=TEST_DATA)
     X_decoy, y_decoy = make_decoy_data(csv_decoy_file=DECOY_DATA)
 
     class_weight = get_class_weights(y=y_train)
 
-    model = train(X_train=X_train,
-                  y_train=y_train,
-                  class_weight=class_weight)
-
-    # model = tf.keras.models.load_model("./saved_models/GatedGCN/")
+    if CHANGE_WEIGTHS:
+        model = train(X_train=X_train,
+                    y_train=y_train,
+                    class_weight=class_weight)
+    else:
+        model = train(X_train=X_train,
+                    y_train=y_train)
 
     print("***\n VAL METRICS \n***")
     get_test_metrics(X_val, y_val, model)
