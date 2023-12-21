@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import swifter
 import logging
+from rdkit import Chem
 from sklearn.utils import shuffle
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import roc_auc_score, precision_score, recall_score, accuracy_score, confusion_matrix
@@ -73,7 +74,8 @@ def make_train_val_data(csv_file_cov,
         df_noncov["covalent"] = 0
 
         df = pd.concat([df_cov, df_noncov])
-        df = df.drop_duplicates(subset=["SMILES"])
+        df = df.drop_duplicates(subset=["SMILES"]).reset_index(drop=True)
+        df["Mol"] = df.SMILES.apply(lambda x: Chem.MolFromSmiles(x))
 
         df_train, df_val = train_test_split(df,
                                             test_size=0.05,
@@ -84,8 +86,8 @@ def make_train_val_data(csv_file_cov,
         if debug:
             logging.info("Encoding the graphs, this might take a while...")
 
-        df_val["graph"] = df_val.SMILES.swifter.apply(encoder)
-        df_train["graph"] = df_train.SMILES.swifter.apply(encoder)
+        df_val["graph"] = df_val.Mol.swifter.apply(encoder)
+        df_train["graph"] = df_train.Mol.swifter.apply(encoder)
 
         if upsample:
             df_train = upsample_minority(df_train)
@@ -101,7 +103,8 @@ def make_train_val_data(csv_file_cov,
 
 def make_test_data(csv_test_file):
     df_test = pd.read_csv(csv_test_file)
-    df_test["graph"] = df_test.SMILES.swifter.apply(encoder)
+    df_test["Mol"] = df_test.SMILES.apply(lambda x: Chem.MolFromSmiles(x))
+    df_test["graph"] = df_test.Mol.swifter.apply(encoder)
     X_test, y_test = tf.concat(list(df_test.graph.values), axis=0).separate(), df_test.covalent.values
     return X_test, y_test
 
@@ -109,7 +112,8 @@ def make_test_data(csv_test_file):
 def make_decoy_data(csv_decoy_file):
     df_decoy = pd.read_csv(csv_decoy_file)
     df_decoy["covalent"] = 0
-    df_decoy["graph"] = df_decoy.SMILES.swifter.apply(encoder)
+    df_decoy["Mol"] = df_decoy.SMILES.apply(lambda x: Chem.MolFromSmiles(x))
+    df_decoy["graph"] = df_decoy.Mol.swifter.apply(encoder)
     X_decoy, y_decoy = tf.concat(list(df_decoy.graph.values), axis=0).separate(), df_decoy.covalent.values
     return X_decoy, y_decoy
 
