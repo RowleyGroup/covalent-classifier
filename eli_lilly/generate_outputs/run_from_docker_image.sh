@@ -29,4 +29,4 @@ docker_dir=/mutable/outside/world
 docker run --rm --mount type=bind,source=$outside_directory,destination=${docker_dir} \
 --entrypoint "bash" ${container} \
 -c ". /etc/profile && rvm use 2.7.1 > /dev/null && cd ${docker_dir}\
-   && /Lilly-Medchem-Rules/Lilly_Medchem_Rules.rb ${outside_fname}"
+   && /Lilly-Medchem-Rules/Lilly_Medchem_Rules.rb -c 1 -Ch 1000 ${outside_fname}"
