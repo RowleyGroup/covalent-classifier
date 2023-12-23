@@ -16,19 +16,19 @@ TEST_DATA = "./data/SMILES_test/test_data_all.csv"
 DECOY_DATA = "./data/SMILES_test/testset_decoy.csv"
 UPSAMPLE = True
 CHANGE_WEIGTHS = True
-MODELNAME = "GCNII"
+MODELNAME = "GT"
 
 def train(X_train, y_train,
           class_weight={0:1, 1:1},
-          layer = layers.GCNIIConv,
-          units=64,
+          layer = layers.GTConv,
+          units=128,
           n_layers=6,
-          use_edge_features=False,
+          use_edge_features=True,
           dropout=0.15,
           dense_units=128,
           activation="selu",
           learning_rate=5e-5,
-          epochs=30,
+          epochs=20,
           batch_size=32,
           verbosity=2):
 
