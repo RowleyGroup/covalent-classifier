@@ -16,14 +16,14 @@ TEST_DATA = "./data/SMILES_test/test_data_all.csv"
 DECOY_DATA = "./data/SMILES_test/testset_decoy.csv"
 UPSAMPLE = True
 CHANGE_WEIGTHS = True
-MODELNAME = "GT"
+MODELNAME = "GraphSage"
 
 def train(X_train, y_train,
           class_weight={0:1, 1:1},
-          layer = layers.GTConv,
-          units=128,
+          layer = layers.GraphSageConv,
+          units=64,
           n_layers=6,
-          use_edge_features=True,
+          use_edge_features=False,
           dropout=0.15,
           dense_units=128,
           activation="selu",
