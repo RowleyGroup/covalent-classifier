@@ -16,20 +16,20 @@ TEST_DATA = "./data/SMILES_test/test_data_all.csv"
 DECOY_DATA = "./data/SMILES_test/testset_decoy.csv"
 UPSAMPLE = True
 CHANGE_WEIGTHS = True
-MODELNAME = "GraphSage"
+MODELNAME = "GATv2"
 
 def train(X_train, y_train,
           class_weight={0:1, 1:1},
-          layer = layers.GraphSageConv,
-          units=64,
-          n_layers=6,
+          layer = layers.GATv2Conv,
+          units=32,
+          n_layers=4,
           use_edge_features=False,
           dropout=0.15,
           dense_units=128,
           activation="selu",
           learning_rate=5e-5,
           epochs=20,
-          batch_size=32,
+          batch_size=16,
           verbosity=2):
 
     node_preprocessing = MinMaxScaling(
