@@ -6,3 +6,4 @@ saved_models/old_models/
 ignoredFolder/
 train_data.pkl
 test_notebooks/
+.vscode/settings.json
