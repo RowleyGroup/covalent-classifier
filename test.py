@@ -10,7 +10,7 @@ base = "COC1=CC(=CC(OC)=C1)C#CC1=NN([C@H]2CCN(C2)C(=O)C=C)C2=C1C(N)=NC=N2"
 
 class Predict:
     def __init__(self):
-        self.model = tf.keras.models.load_model("./saved_models/GCNII")
+        self.model = tf.keras.models.load_model("./saved_models/GraphSage")
     def __call__(self, smiles_list):
         graphs = encoder(smiles_list)
         return self.model.predict(graphs)
@@ -18,8 +18,8 @@ p = Predict()
 
 samples = exmol.sample_space(base, p, batched=True, preset="narrow")
 # %%
-cfs = exmol.cf_explain(samples, nmols=8)
-exmol.plot_cf(cfs)
+cfs = exmol.cf_explain(samples, nmols=5)
+exmol.plot_cf(cfs, mol_size=(300, 300), mol_fontsize=10)
 
 # %%
 cfs = exmol.cf_explain(samples)
