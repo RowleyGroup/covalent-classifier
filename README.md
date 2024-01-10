@@ -50,3 +50,4 @@ Dataset built for this project can be found under `data/InChI_all/training_data_
 The `data` folder also includes structures excluded from various public databases used to build ProteinReactiveDB, as well as the test data grouped by type of structure.
 
 # Reference
+Cano Gil, V. H.; Rowley, C. <em>ChemRxiv</em> **2023**.  doi: [10.26434/chemrxiv-2023-d0dqp](https://doi.org/10.26434/chemrxiv-2023-d0dqp)

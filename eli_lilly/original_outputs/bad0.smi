@@ -1,0 +1,12 @@
+C#CC1=CC=C(OCC2=N[N]C=C2C2=CC=CC3=C2NC(=C3CCCOC2=CC=CC3=CC=CC=C23)C(=O)O)C=C1C=O TP1 abnormal_valence
+C1=CC(=S)SS1 TP1 no_interesting_atoms
+C1=CSC(=S)S1 TP1 no_interesting_atoms
+C1C2=C(C(=S)SS2)CC1 TP1 no_interesting_atoms
+OB(O)C1=CC(=C(C2=CNC3=NC=C(C4=CN=CC(=C4)C(=O)N(C)C)C=C23)C=C1C=O)OC TP1 non_allowed_atom
+OB1OC2=C(C(=O)O)C=CC=C2C[C@@H]1NC(=O)CC1CCC(NCCN)CC1 TP1 non_allowed_atom
+OB1O[C@H](CN)C2=C1C(=CC=C2Cl)OCCO TP1 non_allowed_atom
+OB1OCC2=C1C(=CC(=C2)N(C1=C(C2CC2)C=C2C(=C(C3=CC=C(F)C=C3)OC2=C1)C(=O)NC)S(=O)(=O)C)Cl TP1 non_allowed_atom
+OB1OCC2=C1C=C(C=C2)C(=O)N1CCN(C)C(=O)C1(C)C TP1 non_allowed_atom
+C1=CC=C(CC(=O)NCB2OC(C)(C)C(C)(C)O2)C=C1 TP1 non_allowed_atom
+OB(O)CNC(=O)/C(=N\OC(C)(C)C(=O)O)/C1=CSC(=N1)N TP1 non_allowed_atom
+OB1OC[C@@H](C2=CN=CC(=C2)C2=CC=C(OC)C(=C2)OCCC)C1 TP1 non_allowed_atom
