@@ -32,8 +32,8 @@ bond_encoder = Featurizer([
 encoder = MolecularGraphEncoder(atom_encoder, bond_encoder)
 
 
-def encode(smiles_string: str):
-    return encoder([smiles_string])
+def encode(input_str: str):
+    return encoder([input_str])
 
 
 def upsample_minority(df: pd.DataFrame):
