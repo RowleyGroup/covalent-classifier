@@ -1,6 +1,6 @@
 # Link to Paper
 
-![Alt Text](./images/readme_image.png)
+![Alt Text](./images/abstract.png)
 
 # Setup environment and run models
 
