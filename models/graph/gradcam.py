@@ -2,10 +2,14 @@ import argparse
 import tensorflow as tf
 from molgraph.models import GradientActivationMapping
 from molgraph.chemistry import vis
+from rdkit import Chem
 from helpers import encode
 
 
 def make_gradcam_heatmap(input_structure, model="./saved_models/GCNII"):
+    mol = Chem.MolFromSmiles(input_structure)
+    if not mol:
+        raise ValueError("Failed to generate mol from smiles")
     model = tf.keras.models.load_model(model)
     gam_model = GradientActivationMapping(
         model,
@@ -13,7 +17,7 @@ def make_gradcam_heatmap(input_structure, model="./saved_models/GCNII"):
         output_activation=None,
         discard_negative_values=True
     )
-    graph = encode(input_structure)
+    graph = encode(mol)
     gam = gam_model(graph)
     heatmap = vis.visualize_maps(molecule=input_structure, maps=gam[0])
     heatmap.save("./gradcam_heatmap.png")
