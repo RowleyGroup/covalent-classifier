@@ -8,7 +8,7 @@
 We recommend using the scripts by pulling the publicly available docker image:
 
 ```
-docker pull vcanogil/covalent-classifier:v3
+docker pull vcanogil/covalent-classifier:latest
 ```
 
 ## Installing locally
