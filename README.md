@@ -25,7 +25,7 @@ python models/graph/train.py
 ```
 or
 ```
-python models/fingerprint/train_test.py
+python models/fingerprint/train.py
 ```
 If you want to specify which particular fingerprint model to run, specify that in the script source itself.
 
