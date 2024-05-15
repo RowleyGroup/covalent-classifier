@@ -15,11 +15,14 @@ docker pull vcanogil/covalent-classifier:latest
 Using the python environment manager of your choice (Python 3.10 is recommended):
 
 ```
+# Example using conda env manager
+conda create -n cov-classifer python=3.10
+conda activate cov-classifer
 pip install -r requirements.txt
 ```
 
 ## Running the training script
-If you want to simply to train a model, run either from the from the main directory:
+If you want to simply to train a model, run either from the from the **main** directory:
 ```
 python models/graph/train.py
 ```
