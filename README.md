@@ -48,6 +48,17 @@ This will make a file named `gradcam_heatmap.png`. If you want to adapt this to 
 
 By default, `GCNII` model is used. You can modifiy which model to use to produce the heatmap by modifying the argument in `make_gradcam_heatmap` of `models/graph/gradcam.py` module, or by training your own model.
 
+# Troubleshooting
+
+If trying to load the models for your own work, you may encounter an error:
+
+```
+ValueError: No TypeSpec has been registered with name 'molgraph.tensors.graph_tensor.GraphTensorSpec'
+```
+
+running `import molgraph` in your current code should remediate that.
+
+
 # ProteinReactiveDB
 Dataset built for this project can be found under `data/InChI_all/training_data_all.csv`.
 The `data` folder also includes structures excluded from various public databases used to build ProteinReactiveDB, as well as the test data grouped by type of structure.
