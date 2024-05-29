@@ -39,6 +39,11 @@ python models/graph/make_prediction.py Your_Smiles_Or_InChI_String
 ```
 Note that if you want to make predictions in batch, it is recommended to alter the script as the original function loads the model every time it makes a prediction.
 
+You can also compute averrage structure Tanimoto similarity and pairwise distance to the training set by passing a `True` flag:
+```
+python models/graph/make_prediction.py Your_Smiles_Or_InChI_String True
+```
+Note that this will take longer than just predicting the label.
 # Generating a GradCAM heatmap
 You can generate a class activation heatmap by running the following command from the main directory:
 ```
