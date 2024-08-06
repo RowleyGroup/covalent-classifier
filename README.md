@@ -1,6 +1,6 @@
 # Link to Paper
 
-![Alt Text](./images/abstract.png)
+![Alt Text](./images/gcn-toc.png)
 
 # Setup environment and run models
 
@@ -52,6 +52,11 @@ python models/graph/gradcam.py Your_Smiles_Or_InChI_String
 This will make a file named `gradcam_heatmap.png`. If you want to adapt this to your needs, refer to `models/graph/gradcam.py` file itself.
 
 By default, `GCNII` model is used. You can modifiy which model to use to produce the heatmap by modifying the argument in `make_gradcam_heatmap` of `models/graph/gradcam.py` module, or by training your own model.
+
+# How to Cite
+
+Researchers using these methods or the ProteinReactiveDB should cite
+Cano Gil, VH; Rowley C.N.	_Digital Discovery_, **2024**, DOI:	https://doi.org/10.1039/D4DD00038B
 
 # Troubleshooting
 
