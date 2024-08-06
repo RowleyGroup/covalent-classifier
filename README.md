@@ -56,6 +56,7 @@ By default, `GCNII` model is used. You can modifiy which model to use to produce
 # How to Cite
 
 Researchers using these methods or the ProteinReactiveDB should cite
+
 Cano Gil, VH; Rowley C.N.	_Digital Discovery_, **2024**, DOI:	https://doi.org/10.1039/D4DD00038B
 
 # Troubleshooting
