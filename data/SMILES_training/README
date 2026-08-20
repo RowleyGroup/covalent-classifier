@@ -1,0 +1,3 @@
+trainingset_covalent_smiles.csv : Positive set (protein-reactive) reactive is constructed from CovInDB, DrugBank
+trainingset_covalent_smiles_larger_set.csv  : Larger Set larger (protein-reactive) contains additional electrophiles from  (https://www.nature.com/articles/s41556-026-01921-z)
+trainingset_noncovalent_smiles.csv : Negative set (not protein-reactive) is constructed from the BindingDB and Drugbank
